@@ -1,0 +1,52 @@
+random_seed: 444
+
+dataset:
+  type: &dataset_type 'KITTI&OpenLane' # KITTI&OpenLane/KITTI
+  batch_size: 16
+  workers: 1
+  use_3d_center: True
+  class_merging: False
+  use_dontcare: False
+  bbox2d_type: 'anno'   # 'proj' or 'anno'
+  meanshape: False      # use predefined anchor or not
+  writelist: ['Pedestrian', 'Car', 'Cyclist','Truck']
+  random_flip: 0.5
+  random_crop: 0.5
+  scale: 0.4
+  shift: 0.1
+  epoch: &epoch 140
+  root_dir: "./3dlane_dataset/kitti"
+  openlane3d_dir: "./3dlane_dataset/desay_openlane_120_test"
+  openlane3d_test_dir: "./3dlane_dataset/desay_openlane_120_test"
+
+model:
+  type: 'centernet3d'
+  backbone: 'dla34'
+  neck: 'DLAUp'
+  num_class: 3
+
+optimizer:
+  #type: 'adai'
+  type: 'sgd'
+  lr: 0.00125
+  weight_decay: 0.00001 # SGD
+  #weight_decay: 0.0005 # ADAI
+
+lr_scheduler:
+  warmup: True  # 5 epoches, cosine warmup, init_lir=0.00001 in default
+  decay_rate: 0.1
+  decay_list: [90, 120]
+
+trainer:
+  max_epoch: *epoch
+  gpu_ids: 0,1,2,3,4,5,6,7
+  save_frequency: 1 # checkpoint save interval (in epoch)
+  # resume_model: 'checkpoints/checkpoint_epoch_70.pth'
+
+
+tester:
+  type: *dataset_type
+  mode: single   # 'single' or 'all'
+  checkpoint: 'checkpoints/checkpoint_epoch_140.pth'  # for 'single' mode
+  checkpoints_dir: 'checkpoints'  # for 'all' model
+  threshold: 0.2  # confidence filter
