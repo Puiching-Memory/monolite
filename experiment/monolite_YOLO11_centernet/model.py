@@ -1,5 +1,5 @@
 import sys
-sys.path.append("/windows/workspace/github/monolite")
+sys.path.append(r"C:\workspace\github\monolite")
 
 import torch
 import torch.nn as nn
@@ -29,4 +29,5 @@ class model(nn.Module):
     
 
 if __name__ == "__main__":
-    print("Testing model.py")
+    model = model()
+    print(model)

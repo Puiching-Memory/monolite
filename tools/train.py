@@ -31,8 +31,12 @@ if __name__ == '__main__':
     
     sys.path.append(args.cfg)
     model = importlib.import_module('model').model()
+    data_cfg = importlib.import_module('dataset').data_cfg()
+    data_set = importlib.import_module('dataset').data_set(vars(data_cfg))
+    
     model = model.to(device)
     
     logger.info(model)
+    logger.info(data_set)
     
     #train(model,device,logger)
