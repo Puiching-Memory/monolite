@@ -1,45 +1,38 @@
+import sys
 import os
-from torch import optim, nn, utils, Tensor
-from torchvision.datasets import kitti
-from torchvision.transforms import ToTensor
-import lightning as L
-
-# define any number of nn.Modules (or use your current ones)
-encoder = nn.Sequential(nn.Linear(28 * 28, 64), nn.ReLU(), nn.Linear(64, 3))
-decoder = nn.Sequential(nn.Linear(3, 64), nn.ReLU(), nn.Linear(64, 28 * 28))
+sys.path.append(r"C:\workspace\github\monolite")
+from lib.utils.logger import logger
+try:
+    local_rank = int(os.environ["LOCAL_RANK"])
+except:
+    local_rank = -1
 
 
-# define the LightningModule
-class LitAutoEncoder(L.LightningModule):
-    def __init__(self, encoder, decoder):
-        super().__init__()
-        self.encoder = encoder
-        self.decoder = decoder
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+torch.backends.cudnn.enabled = True
+torch.backends.cudnn.benchmark = True
 
-    def training_step(self, batch, batch_idx):
-        # training_step defines the train loop.
-        # it is independent of forward
-        x, _ = batch
-        x = x.view(x.size(0), -1)
-        z = self.encoder(x)
-        x_hat = self.decoder(z)
-        loss = nn.functional.mse_loss(x_hat, x)
-        # Logging to TensorBoard (if installed) by default
-        self.log("train_loss", loss)
-        return loss
+import importlib
+import argparse
 
-    def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=1e-3)
-        return optimizer
+def train(model, device, train_loader, test_loader, optimizer, scheduler, logger):
+    pass
 
 
-# init the autoencoder
-autoencoder = LitAutoEncoder(encoder, decoder)
-
-# setup data
-dataset = kitti(os.getcwd(), download=True, transform=ToTensor())
-train_loader = utils.data.DataLoader(dataset)
-
-# train the model (hint: here are some helpful Trainer arguments for rapid idea iteration)
-trainer = L.Trainer(limit_train_batches=100, max_epochs=1)
-trainer.fit(model=autoencoder, train_dataloaders=train_loader)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Monolite training script')
+    parser.add_argument('--cfg', dest='cfg', help='settings of detection in yaml format')
+    args = parser.parse_args()
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    sys.path.append(args.cfg)
+    model = importlib.import_module('model').model()
+    model = model.to(device)
+    
+    logger.info(model)
+    
+    #train(model,device,logger)

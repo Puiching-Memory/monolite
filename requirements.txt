@@ -6,8 +6,11 @@
 
 # install lightning
 # Versioning Policy: https://lightning.ai/docs/pytorch/stable/versioning.html#compatibility-matrix
-lightning==2.4
-torchmetrics==1.4.2  #>=0.7.0
+# lightning==2.4
+# torchmetrics==1.4.2  #>=0.7.0
 
 # install datasets tools
-nuscenes-devkit==1.1.3
+# nuscenes-devkit==1.1.11 # Not support python 3.12
+
+torchinfo==1.8.0
+loguru==0.7.2
