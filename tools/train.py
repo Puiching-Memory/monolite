@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torch.amp
 
 torch.backends.cudnn.enabled = True
 torch.backends.cudnn.benchmark = True
@@ -25,7 +26,7 @@ import argparse
 def train(
     model, trainner, device, train_loader, test_loader, optimizer, scheduler, logger
 ):
-    scaler = torch.amp.GradScaler('cuda')
+    scaler = torch.amp.GradScaler()
     
     for epoch_now in range(trainner.epoch):
         model.train()
@@ -33,9 +34,9 @@ def train(
             optimizer.zero_grad()
             inputs = inputs.to(device)
             logger.info(f"Epoch: {epoch_now}/{trainner.epoch} Iter: {i}/{len(train_loader)} Input: {inputs.shape}")
-            with torch.amp.autocast('cuda'):
+            with torch.autocast(device_type="cuda",dtype=torch.float16):
                 outputs = model(inputs)
-                loss = torch.tensor(1.0, device=device,requires_grad=True)
+                loss = nn.L1Loss()(outputs, torch.zeros_like(outputs))
                 
             scaler.scale(loss).backward()
             scaler.step(optimizer)
