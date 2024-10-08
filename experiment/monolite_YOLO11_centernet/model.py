@@ -21,7 +21,7 @@ class model(nn.Module):
             block.Conv(512,1024,3,2),           # 7-P5/32
             block.C3k2(1024,1024,2,True,0.5),   # 8
             block.SPPF(1024,1024,5),            # 9
-            block.C3k2(1024,512,2,False,0.5),   # 10-head                  # 10-Head
+            block.C3k2(1024,512,2,False,0.5),   # 10-head
         )
 
     def forward(self, x):

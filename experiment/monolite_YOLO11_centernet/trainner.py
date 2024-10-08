@@ -10,7 +10,6 @@ class trainner(object):
         self.epoch = 150
         self.cudnn = True
         self.amp = True
-        self.bf16 = False
         self.ddp = False
         self.dp = False
         self.log_interval = 1

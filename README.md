@@ -2,13 +2,12 @@
 
 # Functional improvement
 
-* [ ] AMP
-* [ ] modle info(torch info)
-* [ ] loguru
+* [X] AMP
+* [X] modle info(torch info)
+* [X] loguru
 * [ ] more optimitzer
 * [X] torch2 support
 * [ ] torch.compile support
-* [ ] torch lighting
 * [ ] swanlab
 * [ ] Anchor3DLine
 * [ ] MixUP3D(MonoLSS)
