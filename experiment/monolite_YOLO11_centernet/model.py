@@ -12,7 +12,7 @@ class model(nn.Module):
 
         self.layer = nn.Sequential(
             block.Conv(3,64,3,2),               # 0-P1/2
-            block.Conv(3,128,3,2),              # 1-P2/4
+            block.Conv(64,128,3,2),              # 1-P2/4
             block.C3k2(128,256,2,False,0.25),   # 2
             block.Conv(256,256,3,2),            # 3-P3/8
             block.C3k2(256,512,2,False,0.25),   # 4
@@ -21,7 +21,7 @@ class model(nn.Module):
             block.Conv(512,1024,3,2),           # 7-P5/32
             block.C3k2(1024,1024,2,True,0.5),   # 8
             block.SPPF(1024,1024,5),            # 9
-            nn.Linear(1024,10)                  # 10-Head
+            block.C3k2(1024,512,2,False,0.5),   # 10-head                  # 10-Head
         )
 
     def forward(self, x):
