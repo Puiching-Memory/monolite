@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 class data_cfg():
     def __init__(self):
         self.root_dir = "./"
-        self.batch_size = 2
+        self.batch_size = 16
         self.use_3d_center = True
         self.writelist = ['Car','Pedestrian','Cyclist']
         self.class_merging = False
@@ -20,7 +20,7 @@ class data_cfg():
         self.random_crop = 0.5
         self.scale = 0.4
         self.shift = 0.1
-        self.num_workers = 1
+        self.num_workers = 2
         self.drop_last_val = True
         self.dataset = KITTI
 

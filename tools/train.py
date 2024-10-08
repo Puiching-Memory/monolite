@@ -21,19 +21,20 @@ torch.backends.cudnn.benchmark = True
 
 import importlib
 import argparse
+from tqdm import tqdm
 
 
 def train(
     model, trainner, device, train_loader, test_loader, optimizer, scheduler, logger
 ):
     scaler = torch.amp.GradScaler()
+    progress_bar = tqdm(range(trainner.epoch), dynamic_ncols=True, leave=True, desc='Training')
     
-    for epoch_now in range(trainner.epoch):
+    for epoch_now in progress_bar:
         model.train()
         for i, (inputs, coord_range, targets, info) in enumerate(train_loader):
             optimizer.zero_grad()
             inputs = inputs.to(device)
-            logger.info(f"Epoch: {epoch_now}/{trainner.epoch} Iter: {i}/{len(train_loader)} Input: {inputs.shape}")
             with torch.autocast(device_type="cuda",dtype=torch.float16):
                 outputs = model(inputs)
                 loss = nn.L1Loss()(outputs, torch.zeros_like(outputs))
@@ -42,6 +43,9 @@ def train(
             scaler.step(optimizer)
             scaler.update()
             
+            #logger.info(f"Epoch: {epoch_now}/{trainner.epoch} Iter: {i}/{len(train_loader)} Input: {inputs.shape}")
+            progress_bar.set_postfix({'micostep':f"{i}/{len(train_loader)}",'Iuput':inputs.shape})
+        progress_bar.update()    
         scheduler.step()
         break
 
@@ -60,6 +64,7 @@ if __name__ == "__main__":
 
     # 导入模型
     model = importlib.import_module("model").model()
+    #model = torch.compile(model) Not support in windows
     model = model.to(device)
 
     # 导入数据集
