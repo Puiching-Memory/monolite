@@ -13,4 +13,5 @@ class trainner(object):
         self.ddp = False
         self.dp = False
         self.log_interval = 1
+        self.save_path = r"C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet\checkpoint"
         

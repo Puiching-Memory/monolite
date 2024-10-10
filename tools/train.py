@@ -29,24 +29,37 @@ def train(
     model, trainner, device, train_loader, test_loader, optimizer, scheduler, logger
 ):
     scaler = torch.amp.GradScaler()
-    progress_bar = tqdm(range(trainner.epoch), dynamic_ncols=True, leave=True, desc='Training')
-    
+    progress_bar = tqdm(
+        range(trainner.epoch), dynamic_ncols=True, leave=True, desc="Training"
+    )
+
     for epoch_now in progress_bar:
         for i, (inputs, coord_range, targets, info) in enumerate(train_loader):
             optimizer.zero_grad()
             inputs = inputs.to(device)
-            with torch.autocast(device_type="cuda",dtype=torch.float16):
+            with torch.autocast(device_type="cuda", dtype=torch.float16):
                 outputs = model(inputs)
-                loss = nn.L1Loss()(outputs, torch.zeros_like(outputs))
-                
+                loss = nn.L1Loss()(
+                    outputs["backbone"], torch.zeros_like(outputs["backbone"])
+                )
+
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
+
+            progress_bar.set_postfix(
+                {
+                    "micostep": f"{i}/{len(train_loader)}",
+                    "Iuput": tuple(inputs.shape),
+                    "backbone": tuple(outputs["backbone"].shape),
+                    "neck": tuple(outputs["neck"].shape),
+                    "loss": loss.item(),
+                }
+            )
             
-            #logger.info(f"Epoch: {epoch_now}/{trainner.epoch} Iter: {i}/{len(train_loader)} Input: {inputs.shape}")
-            progress_bar.set_postfix({'micostep':f"{i}/{len(train_loader)}",'Iuput':inputs.shape})
-        progress_bar.update()    
+        progress_bar.update()
         scheduler.step()
+        torch.save(model.state_dict(), os.path.join(trainner.save_path, "model.pth") )
         break
 
 
@@ -64,7 +77,7 @@ if __name__ == "__main__":
 
     # 导入模型
     model = importlib.import_module("model").model()
-    #model = torch.compile(model) Not support in windows
+    # model = torch.compile(model) Not support in windows
     model.train()
     model = model.to(device)
 
@@ -82,7 +95,9 @@ if __name__ == "__main__":
     trainner = importlib.import_module("trainner").trainner()
 
     # 打印基本信息
-    logger.info(f"\n{summary(model, input_size=(data_cfg.batch_size,3,384,1280),mode='train',verbose=0)}")
+    logger.info(
+        f"\n{summary(model, input_size=(data_cfg.batch_size,3,384,1280),mode='train',verbose=0)}"
+    )
     logger.info(data_set)
     logger.info(optimizer)
     logger.info(scheduler)

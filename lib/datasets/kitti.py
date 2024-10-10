@@ -4,6 +4,7 @@ import torch
 import torch.utils.data as data
 import torch.nn.functional as F
 from PIL import Image
+import pickle
 
 from lib.datasets.utils import angle2class
 from lib.datasets.utils import gaussian_radius
@@ -81,8 +82,15 @@ class KITTI(data.Dataset):
         assert os.path.exists(calib_file)
         return Calibration(calib_file)
     
-
-
+    def build_pkl(self,index):
+        if os.path.exists(f'{self.data_dir}/cache/{index}.pkl'):
+            #os.remove(f'{cache_path}/{index}.pkl')
+            return
+            #pass
+        data = self.__getitem__(index)
+        with open(f'{self.data_dir}/cache/{index}.pkl','wb') as file:
+            pickle.dump(data,file,pickle.HIGHEST_PROTOCOL)
+    
     def __len__(self):
         return self.idx_list.__len__()
 
@@ -117,7 +125,7 @@ class KITTI(data.Dataset):
         if random_mix_flag == True:
             count_num = 0
             random_mix_flag = False
-            while count_num < 50:
+            while count_num < 50: # TODO: 此处的碰撞上限有待研究,可能并需要50次
                 count_num += 1
                 random_index = np.random.randint(len(self.idx_list))
                 random_index = int(self.idx_list[random_index])

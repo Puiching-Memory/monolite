@@ -33,7 +33,9 @@ class data_set():
                                         num_workers=cfg['num_workers'],
                                         shuffle=True,
                                         pin_memory=True,
-                                        drop_last=True)
+                                        drop_last=True,
+                                        persistent_workers=True,
+                                        prefetch_factor=8)
         
         self.val_set = dataset(root_dir=cfg['root_dir'], split='val', cfg=cfg)
         self.val_loader = DataLoader(dataset=self.val_set,
