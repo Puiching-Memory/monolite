@@ -10,9 +10,8 @@ def get_objects_from_label(label_file):
 
 
 class Object3d(object):
-    def __init__(self, line):
+    def __init__(self, line:str):
         label = line.strip().split(' ')
-        self.src = line
         self.cls_type = label[0]
         self.trucation = float(label[1])
         self.occlusion = float(label[2])  # 0:fully visible 1:partly occluded 2:largely occluded 3:unknown
@@ -427,37 +426,7 @@ def roty(t):
     s = np.sin(t)
     return np.array([[c,  0,  s],
                      [0,  1,  0],
-                     [-s, 0,  c]])
-def compute_box_3d(obj, calib):
-    ''' Takes an object and a projection matrix (P) and projects the 3d
-        bounding box into the image plane.
-        Returns:
-            corners_2d: (8,2) array in left image coord.
-            corners_3d: (8,3) array in in rect camera coord.
-    '''
-    # compute rotational matrix around yaw axis
-    R = roty(obj.ry)    
-
-    # 3d bounding box dimensions
-    l = obj.l;
-    w = obj.w;
-    h = obj.h;
-    
-    # 3d bounding box corners
-    x_corners = [l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2];
-    y_corners = [0,0,0,0,-h,-h,-h,-h];
-    #y_corners = [h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2]
-    z_corners = [w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2];
-    
-    # rotate and translate 3d bounding box
-    corners_3d = np.dot(R, np.vstack([x_corners,y_corners,z_corners]))
-    #print corners_3d.shape
-    corners_3d[0,:] = corners_3d[0,:] + obj.pos[0];
-    corners_3d[1,:] = corners_3d[1,:] + obj.pos[1];
-    corners_3d[2,:] = corners_3d[2,:] + obj.pos[2];
-    
-    return np.transpose(corners_3d)
-    
+                     [-s, 0,  c]])    
     
 if __name__ == '__main__':
     from lib.datasets.kitti import KITTI

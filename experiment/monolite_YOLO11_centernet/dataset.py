@@ -9,8 +9,13 @@ from torch.utils.data import DataLoader
 
 class data_cfg():
     def __init__(self):
-        self.root_dir = "./"
-        self.batch_size = 2 # We used the BN layer, so a value of >=2 is recommended
+        self.dataset = KITTI
+        self.root_dir = r"C:\Users\11386\Downloads\kitti3d"
+        self.drop_last_val = True
+        self.split = 'trainval'
+        self.batch_size = 16 # We used the BN layer, so a value of >=2 is recommended
+        self.num_workers = 4
+        
         self.use_3d_center = True
         self.writelist = ['Car','Pedestrian','Cyclist']
         self.class_merging = False
@@ -20,14 +25,11 @@ class data_cfg():
         self.random_crop = 0.5
         self.scale = 0.4
         self.shift = 0.1
-        self.num_workers = 2
-        self.drop_last_val = True
-        self.dataset = KITTI
 
 class data_set():
     def __init__(self, cfg:dict):
         dataset = cfg['dataset']
-        self.train_set = dataset(root_dir=cfg['root_dir'], split='trainval', cfg=cfg)
+        self.train_set = dataset(root_dir=cfg['root_dir'],cfg=cfg)
         self.train_loader = DataLoader(dataset=self.train_set,
                                         batch_size=cfg['batch_size'],
                                         num_workers=cfg['num_workers'],
@@ -35,9 +37,9 @@ class data_set():
                                         pin_memory=True,
                                         drop_last=True,
                                         persistent_workers=True,
-                                        prefetch_factor=8)
+                                        prefetch_factor=2)
         
-        self.val_set = dataset(root_dir=cfg['root_dir'], split='val', cfg=cfg)
+        self.val_set = dataset(root_dir=cfg['root_dir'],cfg=cfg)
         self.val_loader = DataLoader(dataset=self.val_set,
                                 batch_size=cfg['batch_size'],
                                 num_workers=cfg['num_workers'],
@@ -45,7 +47,7 @@ class data_set():
                                 pin_memory=True,
                                 drop_last=cfg['drop_last_val'])
         
-        self.test_set = dataset(root_dir=cfg['root_dir'], split='test', cfg=cfg)
+        self.test_set = dataset(root_dir=cfg['root_dir'],cfg=cfg)
         self.test_loader = DataLoader(dataset=self.test_set,
                                 batch_size=cfg['batch_size'],
                                 num_workers=cfg['num_workers'],

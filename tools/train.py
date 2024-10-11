@@ -23,6 +23,7 @@ import importlib
 import argparse
 from tqdm import tqdm
 from torchinfo import summary
+import time
 
 
 def train(
@@ -34,14 +35,19 @@ def train(
     )
 
     for epoch_now in progress_bar:
-        for i, (inputs, coord_range, targets, info) in enumerate(train_loader):
+        for i, (inputs, targets, info) in enumerate(train_loader):
             optimizer.zero_grad()
             inputs = inputs.to(device)
             with torch.autocast(device_type="cuda", dtype=torch.float16):
+                forward_time = time.time_ns()
                 outputs = model(inputs)
+                forward_time = (time.time_ns() - forward_time) / 1e6  # ms
+
+                loss_time = time.time_ns()
                 loss = nn.L1Loss()(
                     outputs["backbone"], torch.zeros_like(outputs["backbone"])
                 )
+                loss_time = (time.time_ns() - loss_time) / 1e6  # ms
 
             scaler.scale(loss).backward()
             scaler.step(optimizer)
@@ -50,17 +56,21 @@ def train(
             progress_bar.set_postfix(
                 {
                     "micostep": f"{i}/{len(train_loader)}",
-                    "Iuput": tuple(inputs.shape),
-                    "backbone": tuple(outputs["backbone"].shape),
-                    "neck": tuple(outputs["neck"].shape),
+                    "forward_time(ms)": forward_time,
+                    "loss_time(ms)": loss_time,
+                    "dataload_time(ms)": torch.mean(info["dataload_time"]).item(),
                     "loss": loss.item(),
                 }
             )
-            
+
         progress_bar.update()
         scheduler.step()
-        if not os.path.exists(trainner.save_path):os.mkdir(trainner.save_path)
-        torch.save(model.state_dict(), os.path.join(trainner.save_path, "model.pth") )
+        if not os.path.exists(trainner.save_path):
+            os.mkdir(trainner.save_path)
+        torch.save(model.state_dict(), os.path.join(trainner.save_path, "model.pth"))
+        # logger.info(f"input_shape: {tuple(inputs.shape)} backbone: {tuple(outputs['backbone'].shape)} neck: {tuple(outputs['neck'].shape)}")
+        logger.info(f"checkpoint: {epoch_now+1} saved to {trainner.save_path}")
+
         break
 
 
