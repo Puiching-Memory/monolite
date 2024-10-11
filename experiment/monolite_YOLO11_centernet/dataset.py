@@ -1,5 +1,6 @@
 import sys
-sys.path.append(r"C:\workspace\github\monolite")
+import os
+sys.path.append(os.path.abspath("./"))
 from lib.datasets.kitti import KITTI
 
 import torch

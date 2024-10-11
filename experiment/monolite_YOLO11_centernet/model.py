@@ -1,5 +1,6 @@
 import sys
-sys.path.append(r"C:\workspace\github\monolite")
+import os
+sys.path.append(os.path.abspath("./"))
 
 import torch
 import torch.nn as nn
@@ -32,7 +33,7 @@ class model(nn.Module):
             nn.Conv2d(256, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 1, 1, 1, 0),
+            nn.Conv2d(128, 3, 1, 1, 0),
         )
         self.reg2d = nn.Sequential(
             nn.Conv2d(256, 128, 3, 1, 1),

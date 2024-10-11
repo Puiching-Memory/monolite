@@ -1,7 +1,7 @@
 import sys
 import os
+sys.path.append(os.path.abspath("./"))
 
-sys.path.append(r"C:\workspace\github\monolite")
 from lib.utils.logger import logger
 
 try:

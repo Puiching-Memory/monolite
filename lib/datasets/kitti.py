@@ -3,22 +3,17 @@ import numpy as np
 import torch
 import torch.utils.data as data
 import torch.nn.functional as F
-from PIL import Image
 import pickle
 import torchvision
 from torchvision.transforms import v2
 import time
 import sys
+import cv2
 
 sys.path.append(os.path.abspath("./"))
 
-from lib.datasets.utils import angle2class
-from lib.datasets.utils import gaussian_radius
-from lib.datasets.utils import draw_umich_gaussian
 from lib.datasets.kitti_utils import get_objects_from_label
-from lib.datasets.kitti_utils import Calibration
-from lib.datasets.kitti_utils import get_affine_transform
-from lib.datasets.kitti_utils import affine_transform
+from lib.datasets.kitti_utils import Calibration, Object3d
 
 
 class KITTI(data.Dataset):
@@ -51,24 +46,30 @@ class KITTI(data.Dataset):
             ]
         )
 
-    def get_image(self, idx):
+    def get_image(self, idx)->torch.Tensor:
         img_file = os.path.join(self.image_dir, f"{idx}.png")
         assert os.path.exists(img_file)
         image = torchvision.io.read_image(img_file)  # (C,H,W)
         image = self.image_transforms(image)  # 应用变换
         return image
+    
+    def get_image_numpy(self, idx)->np.ndarray:
+        img_file = os.path.join(self.image_dir, f"{idx}.png")
+        assert os.path.exists(img_file)
+        image = cv2.imread(img_file)  # (H,W,C)
+        return image
 
-    def get_label(self, idx):
+    def get_label(self, idx) -> list[Object3d]:
         label_file = os.path.join(self.label_dir, f"{idx}.txt")
         assert os.path.exists(label_file)
         return get_objects_from_label(label_file)
 
-    def get_calib(self, idx):
+    def get_calib(self, idx)->Calibration:
         calib_file = os.path.join(self.calib_dir, f"{idx}.txt")
         assert os.path.exists(calib_file)
         return Calibration(calib_file)
 
-    def build_pkl(self, index):
+    def build_pkl(self, index)->None:
         if os.path.exists(f"{self.data_dir}/cache/{index}.pkl"):
             # os.remove(f'{cache_path}/{index}.pkl')
             return
@@ -83,8 +84,21 @@ class KITTI(data.Dataset):
     def __getitem__(self, index):
         dataload_time = time.time_ns()
         image = self.get_image(self.idx_list[index])
+        numpy_image = self.get_image_numpy(self.idx_list[index])
         label = self.get_label(self.idx_list[index])
         calib = self.get_calib(self.idx_list[index])
+
+        # 每行label都为一个Object3d对象，调用generate_corners3d()方法生成3D坐标
+        corners_ego3d = np.array([i.generate_corners3d() for i in label]) # (N,8,3)
+        # 转换为图像坐标系下的2D坐标
+        boxes_image2d, corners_image2d = calib.corners3d_to_img_boxes(corners_ego3d) # (N,4) (N,8,2)
+        
+        for x1,y1,x2,y2 in boxes_image2d: # 在图像上绘制2D框
+            cv2.rectangle(numpy_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)   
+        for point in corners_image2d: # 在图像上绘制3D框
+            for x,y in point:
+                cv2.circle(numpy_image, (int(x), int(y)), 2, (0, 0, 255), -1)
+        cv2.imwrite("temp.png", numpy_image)
 
         target = {
             "cls2d": 0,

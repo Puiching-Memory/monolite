@@ -1,5 +1,6 @@
 import sys
-sys.path.append(r"C:\workspace\github\monolite")
+import os
+sys.path.append(os.path.abspath("./"))
 
 import torch
 import torch.nn as nn
