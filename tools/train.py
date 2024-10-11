@@ -59,6 +59,7 @@ def train(
             
         progress_bar.update()
         scheduler.step()
+        if not os.path.exists(trainner.save_path):os.mkdir(trainner.save_path)
         torch.save(model.state_dict(), os.path.join(trainner.save_path, "model.pth") )
         break
 

@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 class data_cfg():
     def __init__(self):
         self.root_dir = "./"
-        self.batch_size = 16
+        self.batch_size = 2 # We used the BN layer, so a value of >=2 is recommended
         self.use_3d_center = True
         self.writelist = ['Car','Pedestrian','Cyclist']
         self.class_merging = False

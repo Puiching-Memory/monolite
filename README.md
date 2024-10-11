@@ -15,13 +15,24 @@ TODO
 |      |      |      |
 |      |      |      |
 
+### 最低系统配置
+
+*We used the BN layer, so a value of >=2 is recommended
+
+| GPU   | RAM   | Batch size |
+| ----- | ----- | ---------- |
+| 1.2GB | 2.2GB | 1          |
+| 1.8GB | 2.2GB | 2          |
+
 # Environment
+
+安装torch>=2.0.0
 
 ```
 pip install -r requirements.txt
 ```
 
-### Docker
+### ~~Docker~~（暂不可用）
 
 ```console
 set DOCKER_BUILDKIT=0
@@ -76,3 +87,7 @@ TODO
 * [ ] 将loss计算方法解耦至外部配置
 
 # Thanks
+
+MonoDLE
+
+MonoLSS
