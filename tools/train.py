@@ -1,5 +1,6 @@
 import sys
 import os
+
 sys.path.append(os.path.abspath("./"))
 
 from lib.utils.logger import logger
@@ -24,6 +25,8 @@ import argparse
 from tqdm import tqdm
 from torchinfo import summary
 import time
+import swanlab
+import datetime
 
 
 def train(
@@ -53,15 +56,17 @@ def train(
             scaler.step(optimizer)
             scaler.update()
 
-            progress_bar.set_postfix(
-                {
-                    "micostep": f"{i}/{len(train_loader)}",
-                    "forward_time(ms)": forward_time,
-                    "loss_time(ms)": loss_time,
-                    "dataload_time(ms)": torch.mean(info["dataload_time"]).item(),
-                    "loss": loss.item(),
-                }
-            )
+            info = {
+                "epoch": epoch_now,
+                "micostep": i,
+                "allstep": len(train_loader),
+                "forward_time(ms)": forward_time,
+                "loss_time(ms)": loss_time,
+                "dataload_time(ms)": torch.mean(info["dataload_time"]).item(),
+                "loss": loss.item(),
+            }
+            progress_bar.set_postfix(info)
+            swanlab.log(info)
 
         progress_bar.update()
         scheduler.step()
@@ -113,10 +118,17 @@ if __name__ == "__main__":
     logger.info(optimizer)
     logger.info(scheduler)
 
+    # 初始化swanlab,启动$swanlab watch ./logs
+    swanlab.init(
+        experiment_name=f"{os.path.basename(args.cfg)}_{datetime.datetime.now().strftime('%Y/%m/%d_%H:%M:%S')}",
+        logdir="./logs",
+        mode="local",
+    )
+
     train(
         model,
         trainner,
-        device,
+        device, 
         data_set.train_loader,
         data_set.test_loader,
         optimizer,

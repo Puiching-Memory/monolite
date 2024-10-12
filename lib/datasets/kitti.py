@@ -84,7 +84,6 @@ class KITTI(data.Dataset):
     def __getitem__(self, index):
         dataload_time = time.time_ns()
         image = self.get_image(self.idx_list[index])
-        numpy_image = self.get_image_numpy(self.idx_list[index])
         label = self.get_label(self.idx_list[index])
         calib = self.get_calib(self.idx_list[index])
 
@@ -93,12 +92,13 @@ class KITTI(data.Dataset):
         # 转换为图像坐标系下的2D坐标
         boxes_image2d, corners_image2d = calib.corners3d_to_img_boxes(corners_ego3d) # (N,4) (N,8,2)
         
-        for x1,y1,x2,y2 in boxes_image2d: # 在图像上绘制2D框
-            cv2.rectangle(numpy_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)   
-        for point in corners_image2d: # 在图像上绘制3D框
-            for x,y in point:
-                cv2.circle(numpy_image, (int(x), int(y)), 2, (0, 0, 255), -1)
-        cv2.imwrite("temp.png", numpy_image)
+        # numpy_image = self.get_image_numpy(self.idx_list[index])
+        # for x1,y1,x2,y2 in boxes_image2d: # 在图像上绘制2D框
+        #     cv2.rectangle(numpy_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)   
+        # for point in corners_image2d: # 在图像上绘制3D框
+        #     for x,y in point:
+        #         cv2.circle(numpy_image, (int(x), int(y)), 3, (0, 0, 255), -1)
+        # cv2.imwrite("temp.png", numpy_image)
 
         target = {
             "cls2d": 0,

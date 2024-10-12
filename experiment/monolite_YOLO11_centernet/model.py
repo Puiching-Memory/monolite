@@ -34,12 +34,20 @@ class model(nn.Module):
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 3, 1, 1, 0),
+            nn.Sigmoid()
+        )
+        self.obj2d = nn.Sequential(
+            nn.Conv2d(256, 128, 3, 1, 1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 1, 1, 1, 0),
+            nn.Sigmoid()
         )
         self.reg2d = nn.Sequential(
             nn.Conv2d(256, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 5, 1, 1, 0),
+            nn.Conv2d(128, 4, 1, 1, 0),
         )
         self.offset3d = nn.Sequential(
             nn.Conv2d(256, 128, 3, 1, 1),
@@ -87,6 +95,7 @@ class model(nn.Module):
             "backbone": x_backbone,
             'neck': x_neck,
             "cls2d": self.cls2d(x_neck),
+            "obj2d": self.obj2d(x_neck),
             "reg2d": self.reg2d(x_neck),
             "offset3d": self.offset3d(x_neck),
             "size3d": self.size3d(x_neck),
