@@ -30,7 +30,7 @@ import datetime
 
 
 def train(
-    model, trainner, device, train_loader, test_loader, optimizer, scheduler, logger
+    model, trainner, device, train_loader, test_loader, optimizer, scheduler, loss_fn, logger
 ):
     scaler = torch.amp.GradScaler()
     progress_bar = tqdm(
@@ -47,9 +47,7 @@ def train(
                 forward_time = (time.time_ns() - forward_time) / 1e6  # ms
 
                 loss_time = time.time_ns()
-                loss = nn.L1Loss()(
-                    outputs["backbone"], torch.zeros_like(outputs["backbone"])
-                )
+                loss = loss_fn(outputs, targets)
                 loss_time = (time.time_ns() - loss_time) / 1e6  # ms
 
             scaler.scale(loss).backward()
@@ -106,6 +104,9 @@ if __name__ == "__main__":
 
     # 导入学习率衰减器
     scheduler = importlib.import_module("scheduler").scheduler(optimizer).scheduler
+    
+    # 导入损失函数
+    loss_fn = importlib.import_module("loss").loss().loss
 
     # 导入训练配置
     trainner = importlib.import_module("trainner").trainner()
@@ -133,5 +134,6 @@ if __name__ == "__main__":
         data_set.test_loader,
         optimizer,
         scheduler,
+        loss_fn,
         logger,
     )

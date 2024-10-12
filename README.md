@@ -84,7 +84,7 @@ TODO
 * [ ] MixUP3D(MonoLSS)
 * [ ] memory format (last channel)
 * [ ] 重写kitti数据加载器
-* [ ] 将loss计算方法解耦至外部配置
+* [X] 将loss计算方法解耦至外部配置
 
 # Thanks
 
