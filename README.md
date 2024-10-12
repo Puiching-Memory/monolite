@@ -78,10 +78,10 @@ TODO
 * [X] modle info(torch info)
 * [X] loguru
 * [X] torch2 support
-* [ ] torch.compile support
-* [ ] swanlab
+* [ ] ~~torch.compile support~~
+* [X] swanlab
 * [ ] Anchor3DLine
-* [X] MixUP3D(MonoLSS)
+* [ ] MixUP3D(MonoLSS)
 * [ ] memory format (last channel)
 * [ ] 重写kitti数据加载器
 * [ ] 将loss计算方法解耦至外部配置
