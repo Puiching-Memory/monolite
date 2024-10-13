@@ -34,20 +34,12 @@ class model(nn.Module):
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 3, 1, 1, 0),
-            nn.Sigmoid()
         )
-        self.obj2d = nn.Sequential(
+        self.box2d = nn.Sequential(
             nn.Conv2d(256, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 1, 1, 1, 0),
-            nn.Sigmoid()
-        )
-        self.reg2d = nn.Sequential(
-            nn.Conv2d(256, 128, 3, 1, 1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(128, 4, 1, 1, 0),
+            nn.Conv2d(128, 4*16, 1, 1, 0),
         )
         self.offset3d = nn.Sequential(
             nn.Conv2d(256, 128, 3, 1, 1),
@@ -79,6 +71,7 @@ class model(nn.Module):
         self.neckConv2 = block.C3k2(512+256, 256, 2, False, 0.5)
 
     def forward(self, x):
+        # input shape (B, 3, 384, 1280)
         x_p3 = self.backboneP3(x)
         x_p4 = self.backboneP4(x_p3)
         x_p5 = self.backboneP5(x_p4)
@@ -92,11 +85,10 @@ class model(nn.Module):
         x_neck = self.neckConv2(x) # 16 (P3/8-small)
         
         return {
-            "backbone": x_backbone,
-            'neck': x_neck,
+            "backbone": x_backbone,         # (B, 1024, 12, 40)
+            'neck': x_neck,                 # (B, 256, 48, 160)
             "cls2d": self.cls2d(x_neck),
-            "obj2d": self.obj2d(x_neck),
-            "reg2d": self.reg2d(x_neck),
+            "box2d": self.box2d(x_neck),    # (B, 64, 48, 160)
             "offset3d": self.offset3d(x_neck),
             "size3d": self.size3d(x_neck),
             "heading": self.heading(x_neck),

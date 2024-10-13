@@ -65,13 +65,13 @@ def train(
             }
             progress_bar.set_postfix(info)
             swanlab.log(info)
+            # logger.info(f"input_shape: {tuple(inputs.shape)} backbone: {tuple(outputs['backbone'].shape)} neck: {tuple(outputs['neck'].shape)} box2d: {tuple(outputs['box2d'].shape)}")
 
         progress_bar.update()
         scheduler.step()
         if not os.path.exists(trainner.save_path):
             os.mkdir(trainner.save_path)
         torch.save(model.state_dict(), os.path.join(trainner.save_path, "model.pth"))
-        # logger.info(f"input_shape: {tuple(inputs.shape)} backbone: {tuple(outputs['backbone'].shape)} neck: {tuple(outputs['neck'].shape)}")
         logger.info(f"checkpoint: {epoch_now+1} saved to {trainner.save_path}")
 
         break
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     scheduler = importlib.import_module("scheduler").scheduler(optimizer).scheduler
     
     # 导入损失函数
-    loss_fn = importlib.import_module("loss").loss().loss
+    loss_fn = importlib.import_module("loss").loss(device,8).loss
 
     # 导入训练配置
     trainner = importlib.import_module("trainner").trainner()

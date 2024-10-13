@@ -26,6 +26,7 @@ class data_cfg():
         self.random_crop = 0.5
         self.scale = 0.4
         self.shift = 0.1
+        self.image_size = [384, 1280]
 
 class data_set():
     def __init__(self, cfg:dict):
