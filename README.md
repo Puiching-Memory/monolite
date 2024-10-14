@@ -1,14 +1,20 @@
-# monolite
+# MonoLite
 
 Explore lightweight practices for monocular 3D inspection
 
-# Activate
-
-![Alt](https://repobeats.axiom.co/api/embed/ec6e11b1a493733d51588ad5d740376b07651132.svg "Repobeats analytics image")
+探索单目3D检测的轻量级实践
 
 # Abstract
 
-TODO
+Note that we are an engineering project, the code will be updated synchronously, currently in the early stages of the project, if you want to help, please check out our projects!
+
+注意，我们是工程化项目，代码会同步更新，目前处于项目的早期阶段，如果你想提供帮助，请查阅我们的projects！
+
+![1728926955955](multimedia\model_map.jpg)
+
+# Activity
+
+![Alt](https://repobeats.axiom.co/api/embed/ec6e11b1a493733d51588ad5d740376b07651132.svg "Repobeats analytics image")
 
 # Experiment
 

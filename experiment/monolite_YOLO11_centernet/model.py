@@ -87,7 +87,7 @@ class model(nn.Module):
         return {
             "backbone": x_backbone,         # (B, 1024, 12, 40)
             'neck': x_neck,                 # (B, 256, 48, 160)
-            "cls2d": self.cls2d(x_neck),    # (B, 1, 48, 160)
+            "cls2d": self.cls2d(x_neck),    # (B, cls_num, 48, 160)
             "box2d": self.box2d(x_neck),    # (B, 64, 48, 160)
             "offset3d": self.offset3d(x_neck),
             "size3d": self.size3d(x_neck),
