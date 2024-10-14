@@ -47,7 +47,7 @@ def train(
                 forward_time = (time.time_ns() - forward_time) / 1e6  # ms
 
                 loss_time = time.time_ns()
-                loss = loss_fn(outputs, targets)
+                loss,loss_info = loss_fn(outputs, targets)
                 loss_time = (time.time_ns() - loss_time) / 1e6  # ms
 
             scaler.scale(loss).backward()
@@ -62,6 +62,7 @@ def train(
                 "loss_time(ms)": loss_time,
                 "dataload_time(ms)": torch.mean(info["dataload_time"]).item(),
                 "loss": loss.item(),
+                **loss_info,
             }
             progress_bar.set_postfix(info)
             swanlab.log(info)

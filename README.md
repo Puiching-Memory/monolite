@@ -2,6 +2,10 @@
 
 Explore lightweight practices for monocular 3D inspection
 
+# Activate
+
+![Alt](https://repobeats.axiom.co/api/embed/ec6e11b1a493733d51588ad5d740376b07651132.svg "Repobeats analytics image")
+
 # Abstract
 
 TODO
@@ -10,10 +14,9 @@ TODO
 
 TODO
 
-| col1 | col2 | col3 |
-| ---- | ---- | ---- |
-|      |      |      |
-|      |      |      |
+| Modle | Dataset | mAP50 | mAP75 | method | info |
+| ----- | ------- | ----- | ----- | ------ | ---- |
+|       |         |       |       |        |      |
 
 ### 最低系统配置
 
@@ -72,21 +75,9 @@ TODO
 
 ### ONNX
 
-# Projects Plan
+### TensorRT
 
-* [X] AMP
-* [X] modle info(torch info)
-* [X] loguru
-* [X] torch2 support
-* [ ] ~~torch.compile support~~
-* [X] swanlab
-* [ ] Anchor3DLine
-* [ ] MixUP3D(MonoLSS)
-* [ ] memory format (last channel)
-* [ ] 重写kitti数据加载器
-* [X] 将loss计算方法解耦至外部配置
-
-# Thanks
+# Confirm
 
 MonoDLE
 

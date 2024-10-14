@@ -6,6 +6,5 @@ import math
 import copy
 
 import sys
-sys.path.append(r"C:\workspace\github\monolite")
-
-from lib.models.block import Conv,DFL,DWConv
+import os
+sys.path.append(os.path.abspath("./"))

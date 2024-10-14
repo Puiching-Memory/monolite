@@ -39,7 +39,7 @@ class model(nn.Module):
             nn.Conv2d(256, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 4*16, 1, 1, 0),
+            nn.Conv2d(128, 4*8, 1, 1, 0),
         )
         self.offset3d = nn.Sequential(
             nn.Conv2d(256, 128, 3, 1, 1),
@@ -87,7 +87,7 @@ class model(nn.Module):
         return {
             "backbone": x_backbone,         # (B, 1024, 12, 40)
             'neck': x_neck,                 # (B, 256, 48, 160)
-            "cls2d": self.cls2d(x_neck),
+            "cls2d": self.cls2d(x_neck),    # (B, 1, 48, 160)
             "box2d": self.box2d(x_neck),    # (B, 64, 48, 160)
             "offset3d": self.offset3d(x_neck),
             "size3d": self.size3d(x_neck),
