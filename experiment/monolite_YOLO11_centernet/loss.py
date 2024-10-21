@@ -7,24 +7,35 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from lib.utils.assigner import decode_bbox
-from lib.models.loss import BboxLoss
+from lib.utils.assigner import notassigner
+from lib.utils.metrics import bbox_iou
+from lib.models.loss import VFLoss,FocalLoss,Poly1FocalLoss,focal_loss_cornernet
+from focal_loss.focal_loss import FocalLoss
 
 class loss(object):
-    def __init__(self,device,stride):
-        from lib.utils.assigner import TaskAlignedAssigner
+    def __init__(self,device):
         self.device = device
-        self.stride = stride
-        self.assigner = TaskAlignedAssigner(topk=10,num_classes=3,alpha=0.5, beta=6.0)
-        self.bbox_loss = BboxLoss(reg_max=8).to(device)
+        #self.heatmap_loss = nn.BCEWithLogitsLoss()
         self.cls2d_loss = nn.BCEWithLogitsLoss()
     
-    def loss(self,output:dict[torch.Tensor], target:dict[torch.Tensor])->torch.Tensor:        
-        output['box2d'] = decode_bbox(output['box2d'],self.device,self.stride)
+    def loss(self,output:dict[torch.Tensor], target:dict[torch.Tensor])->torch.Tensor:    
+        """
+        计算损失函数
+        ---
+        output:dict[torch.Tensor]
+            keys:
+            - 'box2d': 预测的2D框坐标,shape为(batch_size,num_anchors,4)
+            - 'offset2d': 预测的2D框中心偏移量,shape为(batch_size,num_anchors,2)
+            - 'cls2d': 预测的2D框类别,shape为(batch_size,num_anchors,num_classes)
         
-        cls2d_loss = self.cls2d_loss(output['cls2d'], torch.zeros_like(output["cls2d"]))
+        return:torch.Tensor
+            损失函数值
+        """
+        #loss_box2d = -torch.log(bbox_iou(output['box2d'], target['box2d']))
+        #loss_temp = nn.BCEWithLogitsLoss()(output['neck'],torch.zeros_like(output['neck']))
+        loss_heatmap = focal_loss_cornernet(output['heatmap'].sigmoid_(), target['heatmap'])
         
-        loss1 = nn.L1Loss()(output["neck"], torch.zeros_like(output["neck"]))
-        
-        loss_info = {'loss1':loss1.item(),'cls2d_loss':cls2d_loss.item()}
-        return loss1+cls2d_loss,loss_info
+        loss = loss_heatmap
+        loss_info = {'loss_heatmap':loss_heatmap}
+           
+        return loss,loss_info

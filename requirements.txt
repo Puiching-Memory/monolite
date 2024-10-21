@@ -16,6 +16,10 @@
 torchinfo==1.8.0
 loguru==0.7.2
 opencv-python==4.10.0.84
-pillow==10.4.0
+pillow==11.0.0
 tqdm==4.66.5
-swanlab==0.3.21
+swanlab==0.3.23
+
+# focal_loss_torch==0.1.2
+
+# https://huggingface.co/madbuda/triton-windows-builds/tree/main

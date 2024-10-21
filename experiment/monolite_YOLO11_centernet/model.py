@@ -35,11 +35,11 @@ class model(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 3, 1, 1, 0),
         )
-        self.box2d = nn.Sequential(
+        self.heatmap = nn.Sequential(
             nn.Conv2d(256, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 4*8, 1, 1, 0),
+            nn.Conv2d(128, 1, 1, 1, 0),
         )
         self.offset3d = nn.Sequential(
             nn.Conv2d(256, 128, 3, 1, 1),
@@ -69,7 +69,7 @@ class model(nn.Module):
         self.upsample2 = block.DySample(512, 2, "lp", 4, False)
         self.neckConv1 = block.C3k2(1024+512, 512, 2, False, 0.5)
         self.neckConv2 = block.C3k2(512+256, 256, 2, False, 0.5)
-
+        
     def forward(self, x):
         # input shape (B, 3, 384, 1280)
         x_p3 = self.backboneP3(x)
@@ -88,7 +88,7 @@ class model(nn.Module):
             "backbone": x_backbone,         # (B, 1024, 12, 40)
             'neck': x_neck,                 # (B, 256, 48, 160)
             "cls2d": self.cls2d(x_neck),    # (B, cls_num, 48, 160)
-            "box2d": self.box2d(x_neck),    # (B, 64, 48, 160)
+            "heatmap": self.heatmap(x_neck), # (B, 1, 48, 160)
             "offset3d": self.offset3d(x_neck),
             "size3d": self.size3d(x_neck),
             "heading": self.heading(x_neck),

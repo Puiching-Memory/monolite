@@ -2,3 +2,4 @@ __pycache__
 *.pth
 temp.png
 logs/
+_test.py

@@ -41,6 +41,7 @@ def train(
         for i, (inputs, targets, info) in enumerate(train_loader):
             optimizer.zero_grad()
             inputs = inputs.to(device)
+            targets = {key: value.to(device) for key, value in targets.items()}
             with torch.autocast(device_type="cuda", dtype=torch.float16):
                 forward_time = time.time_ns()
                 outputs = model(inputs)
@@ -92,7 +93,7 @@ if __name__ == "__main__":
 
     # 导入模型
     model = importlib.import_module("model").model()
-    # model = torch.compile(model) Not support in windows
+    #model = torch.compile(model) # Not support in windows
     model.train()
     model = model.to(device)
 
@@ -107,7 +108,7 @@ if __name__ == "__main__":
     scheduler = importlib.import_module("scheduler").scheduler(optimizer).scheduler
     
     # 导入损失函数
-    loss_fn = importlib.import_module("loss").loss(device,8).loss
+    loss_fn = importlib.import_module("loss").loss(device).loss
 
     # 导入训练配置
     trainner = importlib.import_module("trainner").trainner()

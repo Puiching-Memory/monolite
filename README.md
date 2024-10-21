@@ -16,13 +16,25 @@ Note that we are an engineering project, the code will be updated synchronously,
 
 ![Alt](https://repobeats.axiom.co/api/embed/ec6e11b1a493733d51588ad5d740376b07651132.svg "Repobeats analytics image")
 
+# 架构设计
+
+我们将神经网络训练中最重要的部件分离了出来，而其他针对模型的操作，如训练/测试/评估/导出，则作为一种任务文件被不同的实验共用。
+
+
 # Experiment
 
 TODO
 
-| Modle | Dataset | mAP50 | mAP75 | method | info |
-| ----- | ------- | ----- | ----- | ------ | ---- |
-|       |         |       |       |        |      |
+| Model    | Dataset | info |
+| -------- | ------- | ---- |
+| MonoLite | Kitti   |      |
+|          |         |      |
+
+### Torch info
+
+| Model    | Input size (MB) | Params size (MB) | Total params | Total mult-adds |
+| -------- | --------------- | ---------------- | ------------ | --------------- |
+| MonoLite | 94.37           | 109.04           | 27,260,609   | 903.20          |
 
 ### 最低系统配置
 
@@ -59,6 +71,17 @@ https://github.com/DaoCloud/public-image-mirror
 conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.4 -c pytorch -c nvidia
 ```
 
+# Pre-training model zoo
+
+| Model    | URL |
+| -------- | --- |
+| MonoLite |     |
+|          |     |
+
+# Inference
+
+TODO
+
 # Train
 
 ```
@@ -72,10 +95,6 @@ TODO
 # Eval
 
 building...
-
-# Inference
-
-TODO
 
 # Export
 
