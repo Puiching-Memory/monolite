@@ -110,6 +110,10 @@ python tools\export.py --cfg C:\workspace\github\monolite\experiment\monolite_YO
 
 # Confirm
 
-MonoDLE
-
-MonoLSS
+| type      | name        | url                                                           | title                                                                    |
+| --------- | ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| CVPR 2021 | MonoDLE     | [monodle github](https://github.com/xinzhuma/monodle)            | Delving into Localization Errors for Monocular 3D Object Detection       |
+| 3DV 2024  | MonoLSS     | [monolss github](https://github.com/Traffic-X/MonoLSS/)          | Learnable Sample Selection For Monocular 3D Detection                    |
+|           | TTFNet      |                                                               |                                                                          |
+| project   | ultralytics | [ultralytics github](https://github.com/ultralytics/ultralytics) | YOLOv8/v11+v9/v10                                                        |
+| tools     | netron      | [netron web](https://netron.app/)                                | Visualizer for neural network, deep learning and machine learning models |
