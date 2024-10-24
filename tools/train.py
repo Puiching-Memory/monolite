@@ -38,7 +38,7 @@ def train(
     )
 
     for epoch_now in progress_bar:
-        for i, (inputs, targets, info) in enumerate(train_loader):
+        for i, (inputs, targets, data_info) in enumerate(train_loader):
             optimizer.zero_grad()
             inputs = inputs.to(device)
             targets = {key: value.to(device) for key, value in targets.items()}
@@ -76,13 +76,13 @@ def train(
         torch.save(model.state_dict(), os.path.join(trainner.save_path, "model.pth"))
         logger.info(f"checkpoint: {epoch_now+1} saved to {trainner.save_path}")
 
-        break
+        #break
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Monolite training script")
     parser.add_argument(
-        "--cfg", dest="cfg", help="settings of detection in yaml format"
+        "--cfg", dest="cfg", help="path to config file"
     )
     args = parser.parse_args()
 

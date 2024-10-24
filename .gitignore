@@ -1,5 +1,7 @@
 __pycache__
 *.pth
 temp.png
-logs/
 _test.py
+logs/
+output/
+checkpoint/

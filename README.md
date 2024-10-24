@@ -20,7 +20,6 @@ Note that we are an engineering project, the code will be updated synchronously,
 
 我们将神经网络训练中最重要的部件分离了出来，而其他针对模型的操作，如训练/测试/评估/导出，则作为一种任务文件被不同的实验共用。
 
-
 # Experiment
 
 TODO
@@ -36,18 +35,19 @@ TODO
 | -------- | --------------- | ---------------- | ------------ | --------------- |
 | MonoLite | 94.37           | 109.04           | 27,260,609   | 903.20          |
 
-### 最低系统配置
+### 性能测试
 
 *We used the BN layer, so a value of >=2 is recommended
 
-| GPU   | RAM   | Batch size |
-| ----- | ----- | ---------- |
-| 1.2GB | 2.2GB | 1          |
-| 1.8GB | 2.2GB | 2          |
+| Task  | GPU(GB) | RAM(GB) | Batch size | Speed(it/s) |
+| ----- | ------- | ------- | ---------- | ----------- |
+| train | 1.2     | 2.2     | 1          |             |
+| train | 1.8     | 2.2     | 2          |             |
+| eval  | 2.2     | 2.0     | 1          | 43          |
 
 # Environment
 
-安装torch>=2.0.0
+安装torch==2.5.0(cuda==12.4)
 
 ```
 pip install -r requirements.txt
@@ -80,7 +80,9 @@ conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=
 
 # Inference
 
-TODO
+```
+python tools\detect.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
+```
 
 # Train
 
