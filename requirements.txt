@@ -19,6 +19,10 @@ opencv-python==4.10.0.84
 pillow==11.0.0
 tqdm==4.66.5
 swanlab==0.3.23
+onnx==1.17.0
+onnxruntime-gpu==1.19.2
+onnxscript==0.1.0.dev20241024
+onnxsim==0.4.36
 
 # focal_loss_torch==0.1.2
 

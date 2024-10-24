@@ -102,6 +102,10 @@ building...
 
 ### ONNX
 
+```
+python tools\export.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
+```
+
 ### TensorRT
 
 # Confirm
