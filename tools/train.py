@@ -92,13 +92,18 @@ def train(
         torch.save(model.state_dict(), os.path.join(trainner.save_path, "model.pth"))
         logger.info(f"checkpoint: {epoch_now+1} saved to {trainner.save_path}")
 
-        # 保存可视化结果
+        # 保存模型预测可视化结果
         model.eval()
-        results = visualizer.decode(inputs, outputs)
+        results = visualizer.decode_output(inputs, outputs)
+        results = {key: swanlab.Image(value) for key, value in results.items()}
+        swanlab.log(results)
+        
+        # 保存真值可视化结果
+        results = visualizer.decode_target(inputs, targets)
         results = {key: swanlab.Image(value) for key, value in results.items()}
         swanlab.log(results)
 
-        progress_bar.update()
+        progress_bar.update(1)
 
 
 if __name__ == "__main__":

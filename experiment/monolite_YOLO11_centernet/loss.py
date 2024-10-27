@@ -51,8 +51,8 @@ class loss(object):
         loss = loss_heatmap
         loss_info = {"loss_heatmap": loss_heatmap}
 
-        logger.info(output["heatmap"])
-        logger.warning(target["heatmap"])
-        logger.info(loss)
+        #logger.info(output["heatmap"])
+        #logger.warning(target["heatmap"])
+        #logger.info(loss)
         
         return loss, loss_info

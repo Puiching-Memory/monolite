@@ -116,7 +116,7 @@ class KITTI(data.Dataset):
         heatmap_backgroud = np.ones_like(heatmap) # heatmap背景
         heatmap_backgroud = heatmap_backgroud - heatmap
         
-        heatmap = np.concatenate((heatmap,heatmap_backgroud),axis=0) # 合并heatmap和背景
+        heatmap = np.concatenate((heatmap_backgroud,heatmap),axis=0) # 合并heatmap和背景
         
         #numpy_image[boxes_image2d[:,0],boxes_image2d[:,1]] = (0,0,255)
         

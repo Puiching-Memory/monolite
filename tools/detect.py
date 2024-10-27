@@ -44,7 +44,8 @@ def detect(model, device, test_loader, visualizer, logger):
         if not os.path.exists(visualizer.save_path):
             os.mkdir(visualizer.save_path)
 
-        result = visualizer.decode(inputs, outputs)
+        result = visualizer.decode_output(inputs, outputs)
+        result = visualizer.decode_target(inputs, targets)
 
         info = {
             "forward_time": forward_time,
