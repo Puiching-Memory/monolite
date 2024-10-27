@@ -1,15 +1,19 @@
 import sys
 import os
 
+import torch.nn.intrinsic
+
 sys.path.append(os.path.abspath("./"))
 
 from lib.utils.logger import logger
+from lib.models.init import weight_init
 
 try:
     local_rank = int(os.environ["LOCAL_RANK"])
 except:
     local_rank = -1
 
+# os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
 
 import torch
 import torch.nn as nn
@@ -30,7 +34,16 @@ import datetime
 
 
 def train(
-    model, trainner, device, train_loader, test_loader, optimizer, scheduler, loss_fn, logger
+    model,
+    trainner,
+    device,
+    train_loader,
+    test_loader,
+    optimizer,
+    scheduler,
+    loss_fn,
+    visualizer,
+    logger,
 ):
     scaler = torch.amp.GradScaler()
     progress_bar = tqdm(
@@ -38,6 +51,7 @@ def train(
     )
 
     for epoch_now in progress_bar:
+        model.train()
         for i, (inputs, targets, data_info) in enumerate(train_loader):
             optimizer.zero_grad()
             inputs = inputs.to(device)
@@ -48,7 +62,7 @@ def train(
                 forward_time = (time.time_ns() - forward_time) / 1e6  # ms
 
                 loss_time = time.time_ns()
-                loss,loss_info = loss_fn(outputs, targets)
+                loss, loss_info = loss_fn(outputs, targets)
                 loss_time = (time.time_ns() - loss_time) / 1e6  # ms
 
             scaler.scale(loss).backward()
@@ -61,28 +75,39 @@ def train(
                 "allstep": len(train_loader),
                 "forward_time(ms)": forward_time,
                 "loss_time(ms)": loss_time,
-                "dataload_time(ms)": torch.mean(info["dataload_time"]).item(),
+                "dataload_time(ms)": torch.mean(data_info["dataload_time"]).item(),
                 "loss": loss.item(),
                 **loss_info,
             }
             progress_bar.set_postfix(info)
             swanlab.log(info)
             # logger.info(f"input_shape: {tuple(inputs.shape)} backbone: {tuple(outputs['backbone'].shape)} neck: {tuple(outputs['neck'].shape)} box2d: {tuple(outputs['box2d'].shape)}")
-
-        progress_bar.update()
+            # break
+        
         scheduler.step()
+
+        # 保存模型
         if not os.path.exists(trainner.save_path):
             os.mkdir(trainner.save_path)
         torch.save(model.state_dict(), os.path.join(trainner.save_path, "model.pth"))
         logger.info(f"checkpoint: {epoch_now+1} saved to {trainner.save_path}")
 
-        #break
+        # 保存可视化结果
+        model.eval()
+        results = visualizer.decode(inputs, outputs)
+        results = {key: swanlab.Image(value) for key, value in results.items()}
+        swanlab.log(results)
+
+        progress_bar.update()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Monolite training script")
     parser.add_argument(
-        "--cfg", dest="cfg", help="path to config file"
+        "--cfg",
+        dest="cfg",
+        default=r"C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet",
+        help="path to config file",
     )
     args = parser.parse_args()
 
@@ -93,8 +118,8 @@ if __name__ == "__main__":
 
     # 导入模型
     model = importlib.import_module("model").model()
-    #model = torch.compile(model) # Not support in windows
-    model.train()
+    # model = torch.compile(model) # Not support in windows
+    model.apply(weight_init)
     model = model.to(device)
 
     # 导入数据集
@@ -106,12 +131,15 @@ if __name__ == "__main__":
 
     # 导入学习率衰减器
     scheduler = importlib.import_module("scheduler").scheduler(optimizer).scheduler
-    
+
     # 导入损失函数
     loss_fn = importlib.import_module("loss").loss(device).loss
 
     # 导入训练配置
     trainner = importlib.import_module("trainner").trainner()
+
+    # 导入可视化工具
+    visualizer = importlib.import_module("visualizer").visualizer()
 
     # 打印基本信息
     logger.info(
@@ -123,19 +151,21 @@ if __name__ == "__main__":
 
     # 初始化swanlab,启动$swanlab watch ./logs
     swanlab.init(
+        project="monolite",
         experiment_name=f"{os.path.basename(args.cfg)}_{datetime.datetime.now().strftime('%Y/%m/%d_%H:%M:%S')}",
-        logdir="./logs",
-        mode="local",
+        # logdir="./logs", # 本地模式
+        # mode="local",
     )
 
     train(
         model,
         trainner,
-        device, 
+        device,
         data_set.train_loader,
         data_set.test_loader,
         optimizer,
         scheduler,
         loss_fn,
+        visualizer,
         logger,
     )

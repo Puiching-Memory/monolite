@@ -81,7 +81,7 @@ class KITTI(data.Dataset):
             pickle.dump(data, file, pickle.HIGHEST_PROTOCOL)
 
     def __len__(self):
-        return self.idx_list.__len__()
+        return len(self.idx_list)
 
     def __getitem__(self, index):
         dataload_time = time.time_ns()
@@ -112,6 +112,11 @@ class KITTI(data.Dataset):
         heatmap = cv2.GaussianBlur(heatmap,(15,15),0) # 高斯模糊
         heatmap = cv2.resize(heatmap, (int(1280/8),int(384/8)),interpolation=cv2.INTER_AREA) # 缩放至heatmap大小
         heatmap = np.expand_dims(heatmap, axis=0) # 增加维度
+        
+        heatmap_backgroud = np.ones_like(heatmap) # heatmap背景
+        heatmap_backgroud = heatmap_backgroud - heatmap
+        
+        heatmap = np.concatenate((heatmap,heatmap_backgroud),axis=0) # 合并heatmap和背景
         
         #numpy_image[boxes_image2d[:,0],boxes_image2d[:,1]] = (0,0,255)
         
@@ -149,5 +154,5 @@ if __name__ == "__main__":
     dataloader = DataLoader(dataset=dataset, batch_size=2, shuffle=True)
 
     for batch_idx, (inputs, targets, info) in enumerate(dataloader):
-        print(inputs.shape, targets, info)
+        print(inputs.shape, targets['heatmap'].shape, info)
         break

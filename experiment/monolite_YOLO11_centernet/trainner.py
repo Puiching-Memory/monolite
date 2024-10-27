@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 class trainner(object):
     def __init__(self):
-        self.epoch = 150
+        self.epoch = 5
         self.cudnn = True
         self.amp = True
         self.ddp = False

@@ -51,7 +51,7 @@ class data_set():
         
         self.test_set = dataset(root_dir=cfg['root_dir'],cfg=cfg)
         self.test_loader = DataLoader(dataset=self.test_set,
-                                batch_size=1,
+                                batch_size=2,
                                 num_workers=1,
                                 shuffle=True,
                                 pin_memory=True,

@@ -28,18 +28,41 @@ class visualizer(object):
             ]
         )
 
-    def decode(self, image: torch.Tensor, output: dict[torch.Tensor]):
+    def decode(
+        self, image: torch.Tensor, output: dict[torch.Tensor]
+    ) -> dict[np.ndarray]:
+        # 解码image
         image = self.image_transforms(image)
-        image = image.squeeze().permute(1, 2, 0).cpu().numpy()  # (384, 1280, 3)
+        image = image[0].permute(1, 2, 0).cpu().detach().numpy()  # (384, 1280, 3)
 
-        heatmap = output["heatmap"].sigmoid_().squeeze().cpu().detach().numpy()  # (48,160)
+        # 解码heatmap
+        heatmap = output["heatmap"][0].sigmoid_().cpu().detach().numpy()  # (C, 48, 160)
         heatmap = heatmap * 255.0
-        heatmap = cv2.resize(heatmap, (1280, 384))
-        heatmap = cv2.applyColorMap(heatmap.astype(np.uint8), cv2.COLORMAP_VIRIDIS)
-        
-        image = cv2.addWeighted(image, 0.5, heatmap, 0.5, 0)
-        print(heatmap, heatmap.shape)
+        heatmap = heatmap.astype(np.uint8)
+        print(heatmap)
 
-        cv2.imwrite(os.path.join(self.save_path, "temp.jpg"), image)
-        
-        return image
+        # 拆分heatmap
+        heatmap_backgroud = heatmap[0]
+        heatmap_cls1 = heatmap[1]
+
+        # 将heatmap缩放至原图大小
+        heatmap_backgroud = cv2.resize(heatmap_backgroud, (1280, 384))
+        heatmap_cls1 = cv2.resize(heatmap_cls1, (1280, 384))
+
+        # 映射颜色图
+        heatmap_backgroud = cv2.applyColorMap(
+            heatmap_backgroud, cv2.COLORMAP_VIRIDIS
+        )
+        heatmap_cls1 = cv2.applyColorMap(
+            heatmap_cls1, cv2.COLORMAP_VIRIDIS
+        )
+
+        # 合并图像
+        image_backgroud = cv2.addWeighted(image, 0.5, heatmap_backgroud, 0.5, 0)
+        image_cls1 = cv2.addWeighted(image, 0.5, heatmap_cls1, 0.5, 0)
+        # print(heatmap, heatmap.shape)
+
+        cv2.imwrite(os.path.join(self.save_path, "temp_backgroud.jpg"), image_backgroud)
+        cv2.imwrite(os.path.join(self.save_path, "temp_cls1.jpg"), image_cls1)
+
+        return {"image_backgroud": image_backgroud, "image_cls1": image_cls1}
