@@ -22,18 +22,14 @@ torch.backends.cudnn.benchmark = True
 
 import importlib
 import argparse
-from tqdm import tqdm
 from torchinfo import summary
 import time
-import swanlab
-import datetime
+from rich.progress import track
 
 
 def detect(model, device, test_loader, visualizer, logger):
-    progress_bar = tqdm(
-        enumerate(test_loader), dynamic_ncols=True, leave=True, desc="Detection"
-    )
-    for i, (inputs, targets, data_info) in progress_bar:
+
+    for i, (inputs, targets, data_info) in track(enumerate(test_loader),"Detecting"):
         inputs = inputs.to(device)
         targets = {key: value.to(device) for key, value in targets.items()}
 
@@ -50,10 +46,7 @@ def detect(model, device, test_loader, visualizer, logger):
         info = {
             "forward_time": forward_time,
         }
-
-        progress_bar.set_postfix(info)
-        progress_bar.update()
-
+        
         break
 
 

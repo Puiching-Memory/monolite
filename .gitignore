@@ -1,7 +1,8 @@
 __pycache__
 *.pth
 temp.png
-_test.py
+_test*
 logs/
+swanlog/
 output/
 checkpoint/

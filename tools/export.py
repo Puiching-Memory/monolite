@@ -22,7 +22,6 @@ torch.backends.cudnn.benchmark = True
 
 import importlib
 import argparse
-from tqdm import tqdm
 from torchinfo import summary
 import time
 import swanlab

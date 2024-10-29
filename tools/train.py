@@ -5,15 +5,8 @@ import torch.nn.intrinsic
 
 sys.path.append(os.path.abspath("./"))
 
-from lib.utils.logger import logger
+from lib.utils.logger import logger, build_progress
 from lib.models.init import weight_init
-
-try:
-    local_rank = int(os.environ["LOCAL_RANK"])
-except:
-    local_rank = -1
-
-# os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
 
 import torch
 import torch.nn as nn
@@ -26,11 +19,21 @@ torch.backends.cudnn.benchmark = True
 
 import importlib
 import argparse
-from tqdm import tqdm
+from rich.live import Live
 from torchinfo import summary
 import time
 import swanlab
 import datetime
+import psutil
+
+try:
+    local_rank = int(os.environ["LOCAL_RANK"])
+except:
+    local_rank = -1
+
+pid = os.getpid()
+pcontext =  psutil.Process(pid)
+# os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
 
 
 def train(
@@ -46,65 +49,74 @@ def train(
     logger,
 ):
     scaler = torch.amp.GradScaler()
-    progress_bar = tqdm(
-        range(trainner.epoch), dynamic_ncols=True, leave=True, desc="Training"
-    )
 
-    for epoch_now in progress_bar:
-        model.train()
-        for i, (inputs, targets, data_info) in enumerate(train_loader):
-            optimizer.zero_grad()
-            inputs = inputs.to(device)
-            targets = {key: value.to(device) for key, value in targets.items()}
-            with torch.autocast(device_type="cuda", dtype=torch.float16):
-                forward_time = time.time_ns()
-                outputs = model(inputs)
-                forward_time = (time.time_ns() - forward_time) / 1e6  # ms
+    table, progress, task_ids = build_progress(len(train_loader), trainner.epoch)
+    with Live(table, refresh_per_second=10) as live:
+        for epoch_now in range(trainner.epoch):
+            model.train()
+            for i, (inputs, targets, data_info) in enumerate(train_loader):
+                optimizer.zero_grad()
+                inputs = inputs.to(device)
+                targets = {key: value.to(device) for key, value in targets.items()}
+                with torch.autocast(device_type="cuda", dtype=torch.float16):
+                    forward_time = time.time_ns()
+                    outputs = model(inputs)
+                    forward_time = (time.time_ns() - forward_time) / 1e6  # ms
 
-                loss_time = time.time_ns()
-                loss, loss_info = loss_fn(outputs, targets)
-                loss_time = (time.time_ns() - loss_time) / 1e6  # ms
+                    loss_time = time.time_ns()
+                    loss, loss_info = loss_fn(outputs, targets)
+                    loss_time = (time.time_ns() - loss_time) / 1e6  # ms
 
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
 
-            info = {
-                "epoch": epoch_now,
-                "micostep": i,
-                "allstep": len(train_loader),
-                "forward_time(ms)": forward_time,
-                "loss_time(ms)": loss_time,
-                "dataload_time(ms)": torch.mean(data_info["dataload_time"]).item(),
-                "loss": loss.item(),
-                **loss_info,
-            }
-            progress_bar.set_postfix(info)
-            swanlab.log(info)
-            # logger.info(f"input_shape: {tuple(inputs.shape)} backbone: {tuple(outputs['backbone'].shape)} neck: {tuple(outputs['neck'].shape)} box2d: {tuple(outputs['box2d'].shape)}")
-            # break
-        
-        scheduler.step()
+                info = {
+                    "epoch": epoch_now,
+                    "micostep": i,
+                    "allstep": len(train_loader),
+                    "forward_time(ms)": forward_time,
+                    "loss_time(ms)": loss_time,
+                    "dataload_time(ms)": round(torch.mean(data_info["dataload_time"]).item(),4),
+                    "loss": round(loss.item(),2),
+                    "cpu":round(pcontext.cpu_percent(),2),
+                    "ram":round(pcontext.memory_percent(),2),
+                    **loss_info,
+                }
+                swanlab.log(info)
+                
+                progress["Progress"].update(task_ids["jobId_microstep"],completed=info["micostep"],total=info["allstep"])
+                progress["Info"].update(task_ids["jobId_microstep_info"],completed=info["micostep"],total=info["allstep"])
+                progress["Time"].update(task_ids["jobId_datatime_info"],completed=info["dataload_time(ms)"])
+                progress["Time"].update(task_ids["jobId_losstime_info"],completed=info["loss_time(ms)"])
+                progress["Time"].update(task_ids["jobId_forwardtime_info"],completed=info["forward_time(ms)"])
+                progress["Loss"].update(task_ids["jobId_loss_info"],completed=info["loss"])
+                progress["System"].update(task_ids["jobId_cpu_info"],completed=info["cpu"])
+                progress["System"].update(task_ids["jobId_ram_info"],completed=info["ram"])
+                
+            scheduler.step()
 
-        # 保存模型
-        if not os.path.exists(trainner.save_path):
-            os.mkdir(trainner.save_path)
-        torch.save(model.state_dict(), os.path.join(trainner.save_path, "model.pth"))
-        logger.info(f"checkpoint: {epoch_now+1} saved to {trainner.save_path}")
+            # 保存模型
+            if not os.path.exists(trainner.save_path):
+                os.mkdir(trainner.save_path)
+            torch.save(
+                model.state_dict(), os.path.join(trainner.save_path, "model.pth")
+            )
+            logger.info(f"checkpoint: {epoch_now+1} saved to {trainner.save_path}")
 
-        # 保存模型预测可视化结果
-        model.eval()
-        results = visualizer.decode_output(inputs, outputs)
-        results = {key: swanlab.Image(value) for key, value in results.items()}
-        swanlab.log(results)
-        
-        # 保存真值可视化结果
-        results = visualizer.decode_target(inputs, targets)
-        results = {key: swanlab.Image(value) for key, value in results.items()}
-        swanlab.log(results)
+            # 保存模型预测可视化结果
+            model.eval()
+            results = visualizer.decode_output(inputs, outputs)
+            results = {key: swanlab.Image(value) for key, value in results.items()}
+            swanlab.log(results)
 
-        progress_bar.update(1)
-
+            # 保存真值可视化结果
+            results = visualizer.decode_target(inputs, targets)
+            results = {key: swanlab.Image(value) for key, value in results.items()}
+            swanlab.log(results)
+            
+            progress["Progress"].update(task_ids["jobId_all"],completed=epoch_now+1,total=trainner.epoch)
+            progress["Info"].update(task_ids["jobId_epoch_info"],completed=epoch_now+1,total=trainner.epoch)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Monolite training script")
@@ -147,8 +159,8 @@ if __name__ == "__main__":
     visualizer = importlib.import_module("visualizer").visualizer()
 
     # 打印基本信息
-    logger.info(
-        f"\n{summary(model, input_size=(data_cfg.batch_size,3,384,1280),mode='train',verbose=0)}"
+    print(
+        f"\n{summary(model, input_size=(data_cfg.batch_size,3,384,1280),mode='train',verbose=0,depth=2)}"
     )
     logger.info(data_set)
     logger.info(optimizer)
