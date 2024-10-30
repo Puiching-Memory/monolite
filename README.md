@@ -47,9 +47,11 @@ TODO
 
 # Environment
 
-安装torch==2.5.0(cuda==12.4)
+依据此[pytorch_issue](https://github.com/pytorch/pytorch/issues/138506)中的讨论，我们将虚拟环境迁移至[miniforge](https://github.com/conda-forge/miniforge)
 
 ```
+conda create -n monolite python=3.12
+pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
 pip install -r requirements.txt
 ```
 
@@ -58,18 +60,12 @@ pip install -r requirements.txt
 ```console
 set DOCKER_BUILDKIT=0
 docker build -t monolite .
-docker run -d  --privileged=true --net host --name zk --shm-size 4G --ulimit memlock=-1 --gpus=all -it -v C:\:/windows/ monolite:latest /bin/bash
+docker run -d  --privileged=true --net host --name {any_name} --shm-size 4G --ulimit memlock=-1 --gpus=all -it -v C:\:/windows/ monolite:latest /bin/bash
 ```
 
 ### Docker mirror
 
 https://github.com/DaoCloud/public-image-mirror
-
-### conda
-
-```
-conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.4 -c pytorch -c nvidia
-```
 
 # Pre-training model zoo
 
