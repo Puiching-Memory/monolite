@@ -4,7 +4,9 @@ Explore lightweight practices for monocular 3D inspection
 
 探索单目3D检测的轻量级实践
 
-# Abstract
+[中文][English]
+
+# Abstract摘要
 
 Note that we are an engineering project, the code will be updated synchronously, currently in the early stages of the project, if you want to help, please check out our projects!
 
@@ -12,22 +14,19 @@ Note that we are an engineering project, the code will be updated synchronously,
 
 ![multimedia\model_map.webp](https://raw.githubusercontent.com/Puiching-Memory/monolite/refs/heads/main/multimedia/model_map.webp "model_map")
 
-# Activity
+# Activity活动
 
 ![Alt](https://repobeats.axiom.co/api/embed/ec6e11b1a493733d51588ad5d740376b07651132.svg "Repobeats analytics image")
 
-# 架构设计
+# Design架构设计
 
 我们将神经网络训练中最重要的部件分离了出来，而其他针对模型的操作，如训练/测试/评估/导出，则作为一种任务文件被不同的实验共用。
 
-# Experiment
-
-TODO
+# Experiment实验
 
 | Model    | Dataset | info |
 | -------- | ------- | ---- |
 | MonoLite | Kitti   |      |
-|          |         |      |
 
 ### Torch info
 
@@ -45,9 +44,11 @@ TODO
 | train | 1.8     | 2.2     | 2          |             |
 | eval  | 2.2     | 2.0     | 1          | 43          |
 
-# Environment
+# Environment环境
 
 依据此[pytorch_issue](https://github.com/pytorch/pytorch/issues/138506)中的讨论，我们将虚拟环境迁移至[miniforge](https://github.com/conda-forge/miniforge)
+
+对于windows系统:MSVC编译器是必须的
 
 ```
 conda create -n monolite python=3.12
@@ -67,34 +68,33 @@ docker run -d  --privileged=true --net host --name {any_name} --shm-size 4G --ul
 
 https://github.com/DaoCloud/public-image-mirror
 
-# Pre-training model zoo
+# Pre-training model zoo预训练模型
 
-| Model    | URL |
-| -------- | --- |
-| MonoLite |     |
-|          |     |
+| Model             | URL                  | Trainning log                                                                                     |
+| ----------------- | -------------------- | ------------------------------------------------------------------------------------------------- |
+| MonoLite_Baseline | [百度网盘][谷歌网盘] | [https://swanlab.cn/@Sail2Dream/monolite/overview](https://swanlab.cn/@Sail2Dream/monolite/overview) |
 
-# Inference
+# Inference推理
 
 ```
 python tools\detect.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
 ```
 
-# Train
+# Train训练
 
 ```
 python tools\train.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
 ```
 
-### Train with your own Dataset
+### Train with your own Dataset自定义数据集训练
 
 TODO
 
-# Eval
+# Eval评估
 
-building...
+TODO
 
-# Export
+# Export导出
 
 ### ONNX
 
@@ -104,7 +104,11 @@ python tools\export.py --cfg C:\workspace\github\monolite\experiment\monolite_YO
 
 ### TensorRT
 
-# Confirm
+TODO
+
+# Confirm致谢
+
+我们衷心感谢所有为这个神经网络开源项目做出贡献的个人和组织。特别感谢以下贡献者：
 
 | type      | name        | url                                                           | title                                                                    |
 | --------- | ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -113,3 +117,7 @@ python tools\export.py --cfg C:\workspace\github\monolite\experiment\monolite_YO
 |           | TTFNet      |                                                               |                                                                          |
 | project   | ultralytics | [ultralytics github](https://github.com/ultralytics/ultralytics) | YOLOv8/v11+v9/v10                                                        |
 | tools     | netron      | [netron web](https://netron.app/)                                | Visualizer for neural network, deep learning and machine learning models |
+
+正是这种协作和共享的精神，让开源项目得以蓬勃发展，并为科技进步做出贡献。我们期待未来有更多的合作和创新，共同推动人工智能领域的发展。
+
+再次感谢每一位支持者，你们的贡献是无价的。
