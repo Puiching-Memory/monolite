@@ -63,7 +63,7 @@ class data_set(DataSetBase):
     def get_test_loader(self):
         return DataLoader(
             dataset=self.test_set,
-            batch_size=2,
+            batch_size=1,
             num_workers=1,
             shuffle=True,
             pin_memory=True,
