@@ -1,68 +1,80 @@
 import sys
 import os
+
 sys.path.append(os.path.abspath("./"))
 from lib.datasets.kitti import KITTI
+from lib.cfg.base import DataSetBase
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-class data_cfg():
+
+class data_set(DataSetBase):
     def __init__(self):
-        self.dataset = KITTI
+        # data config
         self.root_dir = r"C:\Users\11386\Downloads\kitti3d"
         self.drop_last_val = True
-        self.split = 'trainval'
-        self.batch_size = 16 # We used the BN layer, so a value of >=2 is recommended
+        self.split = "trainval"
+        self.batch_size = 16  # We used the BN layer, so a value of >=2 is recommended
         self.num_workers = 4
-        
-        self.use_3d_center = True
-        self.writelist = ['Car','Pedestrian','Cyclist']
-        self.class_merging = False
-        self.use_dontcare = False
-        self.data_dir = r"C:\Users\11386\Downloads\kitti3d"
+
+        self.class_map = {"Car": 0, "Pedestrian": 1, "Cyclist": 2}
         self.random_flip = 0.5
         self.random_crop = 0.5
         self.scale = 0.4
         self.shift = 0.1
         self.image_size = [384, 1280]
 
-class data_set():
-    def __init__(self, cfg:dict):
-        dataset = cfg['dataset']
-        self.train_set = dataset(root_dir=cfg['root_dir'],cfg=cfg)
-        self.train_loader = DataLoader(dataset=self.train_set,
-                                        batch_size=cfg['batch_size'],
-                                        num_workers=cfg['num_workers'],
-                                        shuffle=True,
-                                        pin_memory=True,
-                                        drop_last=True,
-                                        persistent_workers=True,
-                                        prefetch_factor=2)
-        
-        self.val_set = dataset(root_dir=cfg['root_dir'],cfg=cfg)
-        self.val_loader = DataLoader(dataset=self.val_set,
-                                batch_size=cfg['batch_size'],
-                                num_workers=cfg['num_workers'],
-                                shuffle=False,
-                                pin_memory=True,
-                                drop_last=cfg['drop_last_val'])
-        
-        self.test_set = dataset(root_dir=cfg['root_dir'],cfg=cfg)
-        self.test_loader = DataLoader(dataset=self.test_set,
-                                batch_size=2,
-                                num_workers=1,
-                                shuffle=True,
-                                pin_memory=True,
-                                drop_last=False)
-        
-if __name__ == '__main__':
-    cfg = data_cfg()
-    data = data_set(vars(cfg))
-    for i, (inputs, coord_range, targets, info) in enumerate(data.train_loader):
+        # build up dataset
+        self.train_set = KITTI(self.root_dir, self.split, self.class_map)
+        self.val_set = KITTI(self.root_dir, self.split, self.class_map)
+        self.test_set = KITTI(self.root_dir, self.split, self.class_map)
+
+    def get_bath_size(self):
+        return self.batch_size
+
+    def get_num_workers(self):
+        return self.num_workers
+
+    def get_train_loader(self):
+        return DataLoader(
+            dataset=self.train_set,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=True,
+            pin_memory=True,
+            drop_last=True,
+            persistent_workers=True,
+            prefetch_factor=2,
+        )
+
+    def get_val_loader(self):
+        return DataLoader(
+            dataset=self.val_set,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=False,
+            pin_memory=True,
+            drop_last=self.drop_last_val,
+        )
+
+    def get_test_loader(self):
+        return DataLoader(
+            dataset=self.test_set,
+            batch_size=2,
+            num_workers=1,
+            shuffle=True,
+            pin_memory=True,
+            drop_last=False,
+        )
+
+
+if __name__ == "__main__":
+    data = data_set()
+    for i, (inputs, targets, info) in enumerate(data.get_train_loader()):
         print(inputs.shape)
-        print(coord_range.shape)
         print(targets)
         print(info)
         break

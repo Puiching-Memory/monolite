@@ -14,24 +14,24 @@ sys.path.append(os.path.abspath("./"))
 
 from lib.datasets.kitti_utils import get_objects_from_label
 from lib.datasets.kitti_utils import Calibration, Object3d
-from lib.utils.metrics import xyxy2xywh,clip_coordinates
+from lib.utils.metrics import xyxy2xywh, clip_coordinates
 
 
 class KITTI(data.Dataset):
-    def __init__(self, root_dir, cfg):
+    def __init__(self, root_dir, split, class_map):
         # 数据集信息,分布先验
-        self.cfg = cfg
-        self.rootdir = root_dir
-        self.name2clsid = {"Car": 0, "Pedestrian": 1, "Cyclist": 2}
+        self.root_dir = root_dir
+        self.class_map = class_map
+        self.split = split
 
         # 载入数据集
-        assert cfg["split"] in ["train", "val", "trainval", "test"]
-        split_dir = os.path.join(root_dir, "ImageSets", cfg["split"] + ".txt")
+        assert split in ["train", "val", "trainval", "test"]
+        split_dir = os.path.join(root_dir, "ImageSets", split + ".txt")
         self.idx_list = [x.strip() for x in open(split_dir).readlines()]
 
         # 生成子项目路径
         self.data_dir = os.path.join(
-            root_dir, "testing" if cfg["split"] == "test" else "training"
+            root_dir, "testing" if split == "test" else "training"
         )
         self.image_dir = os.path.join(self.data_dir, "image_2")
         self.depth_dir = os.path.join(self.data_dir, "depth")
@@ -85,51 +85,59 @@ class KITTI(data.Dataset):
 
     def __getitem__(self, index):
         dataload_time = time.time_ns()
-        
+
         # 获取图像、标签、标定信息
         image = self.get_image(self.idx_list[index])
         label = self.get_label(self.idx_list[index])
         calib = self.get_calib(self.idx_list[index])
         numpy_image = self.get_image_numpy(self.idx_list[index])
-        
+
         # 生成heatmap
         heatmap = np.zeros(image.shape[1:3])
-    
+
         # 每行label都为一个Object3d对象，调用generate_corners3d()方法生成3D坐标
         corners_ego3d = np.array([i.generate_corners3d() for i in label])  # (N,8,3)
         # 转换为图像坐标系下的2D坐标
         boxes_image2d, corners_image2d = calib.corners3d_to_img_boxes(
             corners_ego3d
         )  # (N,4) (N,8,2)
-        
-        boxes_image2d = xyxy2xywh(boxes_image2d).astype(np.int32) # 转换为xywh格式, (N,4)
-        boxes_image2d[:,[0,1]] = boxes_image2d[:,[1,0]] # 坐标顺序转换, (N,4)
-        
-        boxes_image2d = clip_coordinates(boxes_image2d, heatmap.shape[1],heatmap.shape[0]) # 裁剪超出边界的框
-        for x,y,w,h in boxes_image2d: 
-            cv2.circle(heatmap,(y,x),13,(255),-1)
-        
-        heatmap = cv2.GaussianBlur(heatmap,(15,15),0) # 高斯模糊
-        heatmap = cv2.resize(heatmap, (int(1280/8),int(384/8)),interpolation=cv2.INTER_AREA) # 缩放至heatmap大小
-        heatmap = np.expand_dims(heatmap, axis=0) # 增加维度
-        
-        heatmap_backgroud = np.ones_like(heatmap) # heatmap背景
+
+        boxes_image2d = xyxy2xywh(boxes_image2d).astype(
+            np.int32
+        )  # 转换为xywh格式, (N,4)
+        boxes_image2d[:, [0, 1]] = boxes_image2d[:, [1, 0]]  # 坐标顺序转换, (N,4)
+
+        boxes_image2d = clip_coordinates(
+            boxes_image2d, heatmap.shape[1], heatmap.shape[0]
+        )  # 裁剪超出边界的框
+        for x, y, w, h in boxes_image2d:
+            cv2.circle(heatmap, (y, x), 13, (255), -1)
+
+        heatmap = cv2.GaussianBlur(heatmap, (15, 15), 0)  # 高斯模糊
+        heatmap = cv2.resize(
+            heatmap, (int(1280 / 8), int(384 / 8)), interpolation=cv2.INTER_AREA
+        )  # 缩放至heatmap大小
+        heatmap = np.expand_dims(heatmap, axis=0)  # 增加维度
+
+        heatmap_backgroud = np.ones_like(heatmap)  # heatmap背景
         heatmap_backgroud = heatmap_backgroud - heatmap
-        
-        heatmap = np.concatenate((heatmap_backgroud,heatmap),axis=0) # 合并heatmap和背景
-        
-        #numpy_image[boxes_image2d[:,0],boxes_image2d[:,1]] = (0,0,255)
-        
+
+        heatmap = np.concatenate(
+            (heatmap_backgroud, heatmap), axis=0
+        )  # 合并heatmap和背景
+
+        # numpy_image[boxes_image2d[:,0],boxes_image2d[:,1]] = (0,0,255)
+
         # for x1,y1,x2,y2 in boxes_image2d: # 在图像上绘制2D框
         #     cv2.rectangle(numpy_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
         # for point in corners_image2d: # 在图像上绘制3D框
         #     for x,y in point:
         #         cv2.circle(numpy_image, (int(x), int(y)), 3, (0, 0, 255), -1)
-        #cv2.imwrite("temp.png", heatmap)
+        # cv2.imwrite("temp.png", heatmap)
 
         # cls_type = [i.cls_type for i in label]  # 获取类别标签
         # cls_type = [i for i in cls_type if i in self.cfg["writelist"]]  # 筛选类别标签
-        
+
         target = {
             "cls2d": 0,
             "heatmap": heatmap,
@@ -154,5 +162,5 @@ if __name__ == "__main__":
     dataloader = DataLoader(dataset=dataset, batch_size=2, shuffle=True)
 
     for batch_idx, (inputs, targets, info) in enumerate(dataloader):
-        print(inputs.shape, targets['heatmap'].shape, info)
+        print(inputs.shape, targets["heatmap"].shape, info)
         break

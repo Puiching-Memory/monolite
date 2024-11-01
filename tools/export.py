@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.abspath("./"))
 
 from lib.utils.logger import logger
+from lib.cfg.base import DataSetBase
 
 try:
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -23,9 +24,6 @@ torch.backends.cudnn.benchmark = True
 import importlib
 import argparse
 from torchinfo import summary
-import time
-import swanlab
-import datetime
 from onnxsim import simplify
 import onnx
 
@@ -62,8 +60,8 @@ if __name__ == "__main__":
     sys.path.append(args.cfg)
 
     # 导入模型
-    model = importlib.import_module("model").model()
-    model = model.to(device)
+    model:torch.nn.Module = importlib.import_module("model").model()
+    model.eval()
     
     checkpoint_dict = torch.load(
         os.path.join(args.cfg, "checkpoint", "model.pth"),
@@ -71,22 +69,21 @@ if __name__ == "__main__":
         weights_only=True,
     )
     model.load_state_dict(checkpoint_dict)
-    # model = torch.compile(model) # Not support in windows
-    # model.eval()
+    model = model.to(device)
+
     
     # 导入数据集
-    data_cfg = importlib.import_module("dataset").data_cfg()
-    data_set = importlib.import_module("dataset").data_set(vars(data_cfg))
+    data_set:DataSetBase = importlib.import_module("dataset").data_set()
 
     # 打印基本信息
-    logger.info(
-        f"\n{summary(model, input_size=(data_cfg.batch_size,3,384,1280),mode='train',verbose=0)}"
+    print(
+        f"\n{summary(model, input_size=(data_set.get_bath_size(),3,384,1280),mode='train',verbose=0)}"
     )
     logger.info(data_set)
 
     export(
         model,
         device,
-        data_set.test_loader,
+        data_set.get_test_loader(),
         logger,
     )

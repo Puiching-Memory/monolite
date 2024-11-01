@@ -2,6 +2,7 @@ import sys
 import os
 
 sys.path.append(os.path.abspath("./"))
+from lib.cfg.base import VisualizerBase
 
 import torch
 import torch.nn as nn
@@ -11,7 +12,7 @@ import numpy as np
 import cv2
 
 
-class visualizer(object):
+class visualizer(VisualizerBase):
     def __init__(self):
         self.save_path = (
             r"C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet\output"
@@ -39,7 +40,6 @@ class visualizer(object):
         heatmap = output["heatmap"][0].sigmoid_().cpu().detach().numpy()  # (C, 48, 160)
         heatmap = heatmap * 255.0
         heatmap = heatmap.astype(np.uint8)
-        print(heatmap)
 
         # 拆分heatmap
         heatmap_backgroud = heatmap[0]
@@ -78,7 +78,6 @@ class visualizer(object):
         heatmap = output["heatmap"][0].sigmoid_().cpu().detach().numpy()  # (C, 48, 160)
         heatmap = heatmap * 255.0
         heatmap = heatmap.astype(np.uint8)
-        print(heatmap)
 
         # 拆分heatmap
         heatmap_backgroud = heatmap[0]

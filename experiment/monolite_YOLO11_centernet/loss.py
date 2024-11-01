@@ -8,22 +8,28 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+from lib.cfg.base import LossBase
 from lib.utils.assigner import notassigner
 from lib.utils.metrics import bbox_iou
-from lib.models.loss import Poly1FocalLoss,VFLoss,FocalLoss,focal_loss_cornernet
+from lib.models.loss import (
+    Poly1FocalLoss,
+    VFLoss,
+    focal_loss_cornernet,
+    MultiFocalLoss,
+    BinaryFocalLoss,
+)
 from lib.utils.logger import logger
 
 
-class loss(object):
-    def __init__(self, device):
-        self.device = device
-        #self.heatmap_loss = VFLoss(nn.BCEWithLogitsLoss())
-        self.heatmap_loss = nn.BCEWithLogitsLoss()
+class loss(LossBase):
+    def __init__(self):
+        # self.heatmap_loss = VFLoss(nn.BCEWithLogitsLoss())
+        self.heatmap_loss = focal_loss_cornernet
         self.cls2d_loss = nn.BCEWithLogitsLoss()
 
-    def loss(
+    def __call__(
         self, output: dict[torch.Tensor], target: dict[torch.Tensor]
-    ) -> torch.Tensor:
+    ) -> tuple[torch.Tensor, dict[torch.Tensor]]:
         """
         计算损失函数
         ---
@@ -44,15 +50,25 @@ class loss(object):
         #     target["heatmap"],
         # )
         loss_heatmap = self.heatmap_loss(
-            torch.sigmoid(output["heatmap"]),
-            target["heatmap"],
+            torch.sigmoid(output["heatmap"].float()),
+            target["heatmap"].float(),
         )
 
         loss = loss_heatmap
         loss_info = {"loss_heatmap": loss_heatmap}
 
-        #logger.info(output["heatmap"])
-        #logger.warning(target["heatmap"])
-        #logger.info(loss)
-        
+        logger.info(output["heatmap"])
+        logger.warning(target["heatmap"])
+        print(output["heatmap"].shape, target["heatmap"].shape)
+        logger.info(loss)
+
         return loss, loss_info
+
+    def __str__(self):
+        return f"{self.__class__.__name__}\n{vars(self)}"
+
+
+if __name__ == "__main__":
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    loss_fn = loss()
+    print(loss_fn)

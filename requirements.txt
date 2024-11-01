@@ -1,13 +1,4 @@
-# install torch and torchvision with CUDA 12.4 support
-# --index-url https://download.pytorch.org/whl/cu124
-# torch==2.4.0
-# torchvision==0.19.0
-# torchaudio==2.4.0
-
-# install lightning
-# Versioning Policy: https://lightning.ai/docs/pytorch/stable/versioning.html#compatibility-matrix
-# lightning==2.4
-# torchmetrics==1.4.2  #>=0.7.0
+# NOTE: install torch and torchvision with CUDA 12.4 first!
 
 # install datasets tools
 # nuscenes-devkit==1.1.11 # Not support python 3.12
@@ -27,7 +18,8 @@ onnx==1.17.0
 onnxruntime-gpu==1.19.2
 onnxscript==0.1.0.dev20241024
 onnxsim==0.4.36
+matplotlib==3.9.2
+grad-cam==1.5.4
 
-# focal_loss_torch==0.1.2
-
+# check if torch.complie is supported on windows
 # https://huggingface.co/madbuda/triton-windows-builds/tree/main

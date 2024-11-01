@@ -7,6 +7,14 @@ sys.path.append(os.path.abspath("./"))
 
 from lib.utils.logger import logger, build_progress
 from lib.models.init import weight_init
+from lib.cfg.base import (
+    LossBase,
+    TrainerBase,
+    DataSetBase,
+    SchedulerBase,
+    OptimizerBase,
+    VisualizerBase,
+)
 
 import torch
 import torch.nn as nn
@@ -32,27 +40,27 @@ except:
     local_rank = -1
 
 pid = os.getpid()
-pcontext =  psutil.Process(pid)
+pcontext = psutil.Process(pid)
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
 
 
 def train(
-    model,
-    trainner,
+    model: torch.nn.Module,
+    trainner: TrainerBase,
     device,
-    train_loader,
-    test_loader,
-    optimizer,
-    scheduler,
-    loss_fn,
-    visualizer,
+    train_loader: torch.utils.data.DataLoader,
+    test_loader: torch.utils.data.DataLoader,
+    optimizer: torch.optim.Optimizer,
+    scheduler: torch.optim.lr_scheduler.LRScheduler,
+    loss_fn: LossBase,
+    visualizer: VisualizerBase,
     logger,
 ):
     scaler = torch.amp.GradScaler()
 
-    table, progress, task_ids = build_progress(len(train_loader), trainner.epoch)
+    table, progress, task_ids = build_progress(len(train_loader), trainner.get_epoch())
     with Live(table, refresh_per_second=10) as live:
-        for epoch_now in range(trainner.epoch):
+        for epoch_now in range(trainner.get_epoch()):
             model.train()
             for i, (inputs, targets, data_info) in enumerate(train_loader):
                 optimizer.zero_grad()
@@ -77,32 +85,57 @@ def train(
                     "allstep": len(train_loader),
                     "forward_time(ms)": forward_time,
                     "loss_time(ms)": loss_time,
-                    "dataload_time(ms)": round(torch.mean(data_info["dataload_time"]).item(),4),
-                    "loss": round(loss.item(),2),
-                    "cpu":round(pcontext.cpu_percent(),2),
-                    "ram":round(pcontext.memory_percent(),2),
+                    "dataload_time(ms)": round(
+                        torch.mean(data_info["dataload_time"]).item(), 4
+                    ),
+                    "loss": round(loss.item(), 2),
+                    "cpu": round(pcontext.cpu_percent(), 2),
+                    "ram": round(pcontext.memory_percent(), 2),
                     **loss_info,
                 }
                 swanlab.log(info)
-                
-                progress["Progress"].update(task_ids["jobId_microstep"],completed=info["micostep"],total=info["allstep"])
-                progress["Info"].update(task_ids["jobId_microstep_info"],completed=info["micostep"],total=info["allstep"])
-                progress["Time"].update(task_ids["jobId_datatime_info"],completed=info["dataload_time(ms)"])
-                progress["Time"].update(task_ids["jobId_losstime_info"],completed=info["loss_time(ms)"])
-                progress["Time"].update(task_ids["jobId_forwardtime_info"],completed=info["forward_time(ms)"])
-                progress["Loss"].update(task_ids["jobId_loss_info"],completed=info["loss"])
-                progress["System"].update(task_ids["jobId_cpu_info"],completed=info["cpu"])
-                progress["System"].update(task_ids["jobId_ram_info"],completed=info["ram"])
-                
+
+                progress["Progress"].update(
+                    task_ids["jobId_microstep"],
+                    completed=info["micostep"],
+                    total=info["allstep"],
+                )
+                progress["Info"].update(
+                    task_ids["jobId_microstep_info"],
+                    completed=info["micostep"],
+                    total=info["allstep"],
+                )
+                progress["Time"].update(
+                    task_ids["jobId_datatime_info"], completed=info["dataload_time(ms)"]
+                )
+                progress["Time"].update(
+                    task_ids["jobId_losstime_info"], completed=info["loss_time(ms)"]
+                )
+                progress["Time"].update(
+                    task_ids["jobId_forwardtime_info"],
+                    completed=info["forward_time(ms)"],
+                )
+                progress["Loss"].update(
+                    task_ids["jobId_loss_info"], completed=info["loss"]
+                )
+                progress["System"].update(
+                    task_ids["jobId_cpu_info"], completed=info["cpu"]
+                )
+                progress["System"].update(
+                    task_ids["jobId_ram_info"], completed=info["ram"]
+                )
+
             scheduler.step()
 
             # 保存模型
-            if not os.path.exists(trainner.save_path):
-                os.mkdir(trainner.save_path)
+            if not os.path.exists(trainner.get_save_path()):
+                os.mkdir(trainner.get_save_path())
             torch.save(
-                model.state_dict(), os.path.join(trainner.save_path, "model.pth")
+                model.state_dict(), os.path.join(trainner.get_save_path(), "model.pth")
             )
-            logger.info(f"checkpoint: {epoch_now+1} saved to {trainner.save_path}")
+            logger.info(
+                f"checkpoint: {epoch_now+1} saved to {trainner.get_save_path()}"
+            )
 
             # 保存模型预测可视化结果
             model.eval()
@@ -114,9 +147,18 @@ def train(
             results = visualizer.decode_target(inputs, targets)
             results = {key: swanlab.Image(value) for key, value in results.items()}
             swanlab.log(results)
-            
-            progress["Progress"].update(task_ids["jobId_all"],completed=epoch_now+1,total=trainner.epoch)
-            progress["Info"].update(task_ids["jobId_epoch_info"],completed=epoch_now+1,total=trainner.epoch)
+
+            progress["Progress"].update(
+                task_ids["jobId_all"],
+                completed=epoch_now + 1,
+                total=trainner.get_epoch(),
+            )
+            progress["Info"].update(
+                task_ids["jobId_epoch_info"],
+                completed=epoch_now + 1,
+                total=trainner.get_epoch(),
+            )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Monolite training script")
@@ -134,33 +176,32 @@ if __name__ == "__main__":
     sys.path.append(args.cfg)
 
     # 导入模型
-    model = importlib.import_module("model").model()
+    model: torch.nn.Module = importlib.import_module("model").model()
     # model = torch.compile(model) # Not support in windows
-    model.apply(weight_init)
+    model.apply(weight_init)  # 权重初始化
     model = model.to(device)
 
     # 导入数据集
-    data_cfg = importlib.import_module("dataset").data_cfg()
-    data_set = importlib.import_module("dataset").data_set(vars(data_cfg))
+    data_set: DataSetBase = importlib.import_module("dataset").data_set()
 
     # 导入优化器
-    optimizer = importlib.import_module("optimizer").optimizer(model).optimizer
+    optimizer: OptimizerBase = importlib.import_module("optimizer").optimizer(model)
 
     # 导入学习率衰减器
-    scheduler = importlib.import_module("scheduler").scheduler(optimizer).scheduler
+    scheduler: SchedulerBase = importlib.import_module("scheduler").scheduler(optimizer.get_optimizer())
 
     # 导入损失函数
-    loss_fn = importlib.import_module("loss").loss(device).loss
+    loss: LossBase = importlib.import_module("loss").loss()
 
     # 导入训练配置
-    trainner = importlib.import_module("trainner").trainner()
+    trainner: TrainerBase = importlib.import_module("trainner").trainner()
 
     # 导入可视化工具
-    visualizer = importlib.import_module("visualizer").visualizer()
+    visualizer: VisualizerBase = importlib.import_module("visualizer").visualizer()
 
     # 打印基本信息
     print(
-        f"\n{summary(model, input_size=(data_cfg.batch_size,3,384,1280),mode='train',verbose=0,depth=2)}"
+        f"\n{summary(model, input_size=(data_set.get_bath_size(),3,384,1280),mode='train',verbose=0,depth=2)}"
     )
     logger.info(data_set)
     logger.info(optimizer)
@@ -178,11 +219,11 @@ if __name__ == "__main__":
         model,
         trainner,
         device,
-        data_set.train_loader,
-        data_set.test_loader,
-        optimizer,
-        scheduler,
-        loss_fn,
+        data_set.get_train_loader(),
+        data_set.get_test_loader(),
+        optimizer.get_optimizer(),
+        scheduler.get_scheduler(),
+        loss,
         visualizer,
         logger,
     )

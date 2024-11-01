@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.abspath("./"))
 
 from lib.utils.logger import logger
+from lib.cfg.base import DataSetBase, VisualizerBase
 
 try:
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -27,9 +28,15 @@ import time
 from rich.progress import track
 
 
-def detect(model, device, test_loader, visualizer, logger):
+def detect(
+    model,
+    device,
+    test_loader: torch.utils.data.DataLoader,
+    visualizer: VisualizerBase,
+    logger,
+):
 
-    for i, (inputs, targets, data_info) in track(enumerate(test_loader),"Detecting"):
+    for i, (inputs, targets, data_info) in track(enumerate(test_loader), "Detecting"):
         inputs = inputs.to(device)
         targets = {key: value.to(device) for key, value in targets.items()}
 
@@ -46,7 +53,7 @@ def detect(model, device, test_loader, visualizer, logger):
         info = {
             "forward_time": forward_time,
         }
-        
+
         break
 
 
@@ -61,30 +68,32 @@ if __name__ == "__main__":
     sys.path.append(args.cfg)
 
     # 导入模型
-    model = importlib.import_module("model").model()
-    checkpoint_dict = torch.load(os.path.join(args.cfg, "checkpoint", "model.pth"),map_location=device,weights_only=True)
+    model: torch.nn.Module = importlib.import_module("model").model()
+    checkpoint_dict = torch.load(
+        os.path.join(args.cfg, "checkpoint", "model.pth"),
+        map_location=device,
+        weights_only=True,
+    )
     model.load_state_dict(checkpoint_dict)
-    # model = torch.compile(model) # Not support in windows
     model.eval()
     model = model.to(device)
 
     # 导入数据集
-    data_cfg = importlib.import_module("dataset").data_cfg()
-    data_set = importlib.import_module("dataset").data_set(vars(data_cfg))
+    data_set: DataSetBase = importlib.import_module("dataset").data_set()
 
     # 导入可视化工具
-    visualizer = importlib.import_module("visualizer").visualizer()
+    visualizer: VisualizerBase = importlib.import_module("visualizer").visualizer()
 
     # 打印基本信息
-    logger.info(
-        f"\n{summary(model, input_size=(data_cfg.batch_size,3,384,1280),mode='train',verbose=0)}"
+    print(
+        f"\n{summary(model, input_size=(data_set.get_bath_size(),3,384,1280),mode='train',verbose=0)}"
     )
     logger.info(data_set)
 
     detect(
         model,
         device,
-        data_set.test_loader,
+        data_set.get_test_loader(),
         visualizer,
         logger,
     )
