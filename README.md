@@ -1,6 +1,4 @@
-MSVC编译器
-
-# MSVC编译器MSVC编译器MonoLite
+# MonoLite
 
 Explore lightweight practices for monocular 3D inspection
 
