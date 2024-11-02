@@ -3,6 +3,7 @@ import torch
 import torch.utils.data as data
 from torch.utils.data import DataLoader
 import numpy as np
+from typing import Optional, Tuple, Union, List, Dict, Any
 
 
 class LossBase(metaclass=abc.ABCMeta):
@@ -50,13 +51,25 @@ class DataSetBase(metaclass=abc.ABCMeta):
 class TrainerBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
-    def get_epoch(self) -> int: ...
+    def get_end_epoch(self) -> int: ...
 
     @abc.abstractmethod
     def get_save_path(self) -> str: ...
 
     @abc.abstractmethod
     def get_log_interval(self) -> int: ...
+
+    @abc.abstractmethod
+    def get_seed(self) -> int: ...
+    
+    @abc.abstractmethod
+    def get_resume_checkpoint(self) -> Optional[str]: ...
+    
+    @abc.abstractmethod
+    def get_start_epoch(self) -> int: ...
+    
+    @abc.abstractmethod
+    def set_start_epoch(self, epoch: int) -> None: ...
 
     @abc.abstractmethod
     def is_cudnn(self) -> bool: ...

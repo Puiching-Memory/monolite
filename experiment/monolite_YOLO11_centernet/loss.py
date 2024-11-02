@@ -11,22 +11,14 @@ import torch.optim as optim
 from lib.cfg.base import LossBase
 from lib.utils.assigner import notassigner
 from lib.utils.metrics import bbox_iou
-from lib.models.loss import (
-    Poly1FocalLoss,
-    VFLoss,
-    focal_loss_cornernet,
-    MultiFocalLoss,
-    BinaryFocalLoss,
-)
+from lib.models.loss import varifocal_loss
 from lib.utils.logger import logger
 
 
 class loss(LossBase):
     def __init__(self):
-        # self.heatmap_loss = VFLoss(nn.BCEWithLogitsLoss())
-        self.heatmap_loss = focal_loss_cornernet
-        self.cls2d_loss = nn.BCEWithLogitsLoss()
-
+        pass
+    
     def __call__(
         self, output: dict[torch.Tensor], target: dict[torch.Tensor]
     ) -> tuple[torch.Tensor, dict[torch.Tensor]]:
@@ -49,9 +41,10 @@ class loss(LossBase):
         #     torch.clamp(output["heatmap"].sigmoid_(), min=1e-4, max=1 - 1e-4),
         #     target["heatmap"],
         # )
-        loss_heatmap = self.heatmap_loss(
-            torch.sigmoid(output["heatmap"].float()),
-            target["heatmap"].float(),
+        loss_heatmap = varifocal_loss(
+            torch.sigmoid(output["heatmap"]),
+            #output["heatmap"],
+            target["heatmap"],
         )
 
         loss = loss_heatmap
@@ -60,6 +53,7 @@ class loss(LossBase):
         logger.info(output["heatmap"])
         logger.warning(target["heatmap"])
         print(output["heatmap"].shape, target["heatmap"].shape)
+        print(output["heatmap"].dtype, target["heatmap"].dtype)
         logger.info(loss)
 
         return loss, loss_info
@@ -70,5 +64,15 @@ class loss(LossBase):
 
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    loss_fn = loss()
-    print(loss_fn)
+    
+    B, num_classes, H, W = 16, 2, 48, 160
+    
+    logits = torch.rand([B, num_classes, H, W],dtype=torch.float16,requires_grad=True,device=device)
+    #logits = logits.reshape(B,H,W,num_classes)
+    labels = torch.rand([B, num_classes, H, W],dtype=torch.float64,device=device)
+    #labels = torch.randint(0,num_classes,[B, H, W])
+    print(logits, labels)
+    print(logits.shape, labels.shape)
+    print(logits.dtype, labels.dtype)
+
+    print(varifocal_loss(logits, labels))

@@ -1,4 +1,6 @@
-# MonoLite
+MSVC编译器
+
+# MSVC编译器MSVC编译器MonoLite
 
 Explore lightweight practices for monocular 3D inspection
 
@@ -46,12 +48,26 @@ Note that we are an engineering project, the code will be updated synchronously,
 
 # Environment环境
 
-依据此[pytorch_issue](https://github.com/pytorch/pytorch/issues/138506)中的讨论，我们将虚拟环境迁移至[miniforge](https://github.com/conda-forge/miniforge)
+### 虚拟环境
 
-对于windows系统:MSVC编译器是必须的
+依据此[pytorch_issue](https://github.com/pytorch/pytorch/issues/138506)中的讨论，我们将虚拟环境迁移至[miniforge](https://github.com/conda-forge/miniforge)
 
 ```
 conda create -n monolite python=3.12
+```
+
+### 前置组件
+
+| 系统    | 前置组件           | 下载URL                                                                                             | 备注                 |
+| ------- | ------------------ | --------------------------------------------------------------------------------------------------- | -------------------- |
+| windows | Visual Studio 2022 | [download](https://visualstudio.microsoft.com/zh-hans/vs/)                                             | 注意不同版本间的冲突 |
+| windows | Cmake              | [download](https://github.com/Kitware/CMake/releases/download/v3.30.5/cmake-3.30.5-windows-x86_64.msi) | 3.30.5               |
+| windows | MSbuild            | 通过VS2022下载                                                                                      |                      |
+| windows | MSVC               | 通过VS2022下载                                                                                      |                      |
+
+### pip
+
+```
 pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
 pip install -r requirements.txt
 ```
@@ -121,8 +137,8 @@ TODO
 | CVPR 2021 | MonoDLE     | [monodle github](https://github.com/xinzhuma/monodle)            | Delving into Localization Errors for Monocular 3D Object Detection       |
 | 3DV 2024  | MonoLSS     | [monolss github](https://github.com/Traffic-X/MonoLSS/)          | Learnable Sample Selection For Monocular 3D Detection                    |
 |           | TTFNet      |                                                               |                                                                          |
-| project   | ultralytics | [ultralytics github](https://github.com/ultralytics/ultralytics) | YOLOv8/v11+v9/v10                                                        |
-| tools     | netron      | [netron web](https://netron.app/)                                | Visualizer for neural network, deep learning and machine learning models |
+| community | ultralytics | [ultralytics github](https://github.com/ultralytics/ultralytics) | YOLOv8/v11+v9/v10                                                        |
+| community | netron      | [netron web](https://netron.app/)                                | Visualizer for neural network, deep learning and machine learning models |
 
 正是这种协作和共享的精神，让开源项目得以蓬勃发展，并为科技进步做出贡献。我们期待未来有更多的合作和创新，共同推动人工智能领域的发展。
 

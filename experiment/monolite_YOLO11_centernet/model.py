@@ -1,10 +1,12 @@
 import sys
 import os
+
 sys.path.append(os.path.abspath("./"))
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 
 class model(nn.Module):
     def __init__(self):
@@ -67,28 +69,54 @@ class model(nn.Module):
         )
         self.upsample1 = block.DySample(1024, 2, "lp", 4, False)
         self.upsample2 = block.DySample(512, 2, "lp", 4, False)
-        self.neckConv1 = block.C3k2(1024+512, 512, 2, False, 0.5)
-        self.neckConv2 = block.C3k2(512+256, 256, 2, False, 0.5)
-        
+        self.neckConv1 = block.C3k2(1024 + 512, 512, 2, False, 0.5)
+        self.neckConv2 = block.C3k2(512 + 256, 256, 2, False, 0.5)
+
+    def forward_common(self, x):
+        # input shape (B, 3, 384, 1280)
+        x_p3 = self.backboneP3(x)
+        x_p4 = self.backboneP4(x_p3)
+        x = self.backboneP5(x_p4)
+        x = self.backboneTop(x)
+
+        x = self.upsample1(x)  # 11
+        x = torch.cat([x_p4, x], dim=1)  # 12-cat backbone P4
+        x = self.neckConv1(x)  # 13
+        x = self.upsample2(x)  # 14
+        x = torch.cat([x_p3, x], dim=1)  # 15-# cat backbone P3
+        x = self.neckConv2(x)  # 16 (P3/8-small)
+
+        return {
+            "cls2d": self.cls2d(x),  # (B, cls_num, 48, 160)
+            "heatmap": self.heatmap(x),  # (B, 1, 48, 160)
+            "offset3d": self.offset3d(x),
+            "size3d": self.size3d(x),
+            "heading": self.heading(x),
+            "depth": self.depth(x),
+        }
+
     def forward(self, x):
         # input shape (B, 3, 384, 1280)
         x_p3 = self.backboneP3(x)
         x_p4 = self.backboneP4(x_p3)
         x_p5 = self.backboneP5(x_p4)
         x_backbone = self.backboneTop(x_p5)
-        
-        x = self.upsample1(x_backbone) # 11
-        x = torch.cat([x_p4, x], dim=1) # 12-cat backbone P4
+
+        x = self.upsample1(x_backbone)  # 11
+        x = torch.cat([x_p4, x], dim=1)  # 12-cat backbone P4
         x = self.neckConv1(x)  # 13
-        x = self.upsample2(x) # 14
-        x = torch.cat([x_p3, x], dim=1) # 15-# cat backbone P3
-        x_neck = self.neckConv2(x) # 16 (P3/8-small)
-        
+        x = self.upsample2(x)  # 14
+        x = torch.cat([x_p3, x], dim=1)  # 15-# cat backbone P3
+        x_neck = self.neckConv2(x)  # 16 (P3/8-small)
+
         return {
-            "backbone": x_backbone,         # (B, 1024, 12, 40)
-            'neck': x_neck,                 # (B, 256, 48, 160)
-            "cls2d": self.cls2d(x_neck),    # (B, cls_num, 48, 160)
-            "heatmap": self.heatmap(x_neck), # (B, 1, 48, 160)
+            "x_p3": x_p3,
+            "x_p4": x_p4,
+            "x_p5": x_p5,
+            "backbone": x_backbone,  # (B, 1024, 12, 40)
+            "neck": x_neck,  # (B, 256, 48, 160)
+            "cls2d": self.cls2d(x_neck),  # (B, cls_num, 48, 160)
+            "heatmap": self.heatmap(x_neck),  # (B, 1, 48, 160)
             "offset3d": self.offset3d(x_neck),
             "size3d": self.size3d(x_neck),
             "heading": self.heading(x_neck),

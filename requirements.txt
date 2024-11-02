@@ -19,7 +19,8 @@ onnxruntime-gpu==1.19.2
 onnxscript==0.1.0.dev20241024
 onnxsim==0.4.36
 matplotlib==3.9.2
-grad-cam==1.5.4
+open3d==0.18.0 -f https://www.open3d.org/docs/latest/getting_started.html
+#grad-cam==1.5.4
 
 # check if torch.complie is supported on windows
 # https://huggingface.co/madbuda/triton-windows-builds/tree/main

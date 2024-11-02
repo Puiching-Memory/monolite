@@ -14,4 +14,4 @@ class optimizer(OptimizerBase):
     
     def get_optimizer(self):
         #return optim.SGD(self.model.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-4)
-        return optim.AdamW(self.model.parameters(), lr=1e-3, betas=(0.9,0.999),weight_decay=1e-4)
+        return optim.AdamW(self.model.parameters(), lr=3e-4, betas=(0.9,0.999),weight_decay=1e-4)
