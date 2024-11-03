@@ -71,12 +71,12 @@ def train(
     with Live(table, refresh_per_second=10) as live:
         progress["Progress"].update(
             task_ids["jobId_all"],
-            completed=trainner.get_start_epoch() + 1,
+            completed=trainner.get_start_epoch(),
             total=trainner.get_end_epoch(),
         )
         progress["Info"].update(
             task_ids["jobId_epoch_info"],
-            completed=trainner.get_start_epoch() + 1,
+            completed=trainner.get_start_epoch(),
             total=trainner.get_end_epoch(),
         )
         for epoch_now in range(trainner.get_start_epoch(), trainner.get_end_epoch()):
@@ -110,9 +110,10 @@ def train(
                         torch.mean(data_info["dataload_time"]).item(), 4
                     ),
                     "loss": round(loss.item(), 2),
-                    "cpu": round(pcontext.cpu_percent(), 2),
-                    "ram": round(pcontext.memory_percent(), 2),
                     **loss_info,
+                    "cpu(%)": round(pcontext.cpu_percent(), 2),
+                    "ram(%)": round(pcontext.memory_percent(), 2),
+                    **{f"cuda/{k}": v for k, v in torch.cuda.memory_stats(device=device).items()}, # cuda信息
                 }
                 swanlab.log(info)
 
@@ -140,10 +141,10 @@ def train(
                     task_ids["jobId_loss_info"], completed=info["loss"]
                 )
                 progress["System"].update(
-                    task_ids["jobId_cpu_info"], completed=info["cpu"]
+                    task_ids["jobId_cpu_info"], completed=info["cpu(%)"]
                 )
                 progress["System"].update(
-                    task_ids["jobId_ram_info"], completed=info["ram"]
+                    task_ids["jobId_ram_info"], completed=info["ram(%)"]
                 )
 
             scheduler.step()
@@ -217,7 +218,7 @@ if __name__ == "__main__":
     model: torch.nn.Module = importlib.import_module("model").model()
     # model = torch.compile(model) # Not support in windows
     model = model.to(device)
-
+    
     # 导入数据集
     data_set: DataSetBase = importlib.import_module("dataset").data_set()
 

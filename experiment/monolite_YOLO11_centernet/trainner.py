@@ -15,8 +15,8 @@ class trainner(TrainerBase):
         self.start_epoch = 0
         self.end_epoch = 5
         self.save_path = r"C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet\checkpoint"
-        #self.resume_checkpoint = None
-        self.resume_checkpoint = "C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet\checkpoint\model.pth"
+        self.resume_checkpoint = None
+        #self.resume_checkpoint = "C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet\checkpoint\model.pth"
         self.log_interval = 1
         self.seed = 114514
         self.amp = True
