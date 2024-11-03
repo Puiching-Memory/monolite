@@ -102,8 +102,16 @@ python tools\detect.py --cfg C:\workspace\github\monolite\experiment\monolite_YO
 
 # Train训练
 
+### 单卡训练
+
 ```
-python tools\train.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
+python ./tools/train.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
+```
+
+### 多卡训练
+
+```
+torchrun --nnodes=1 --nproc_per_node=2 ./tools/train.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
 ```
 
 ### Train with your own Dataset自定义数据集训练
