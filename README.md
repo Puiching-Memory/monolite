@@ -134,7 +134,7 @@ TODO
 | --------- | ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | CVPR 2021 | MonoDLE     | [monodle github](https://github.com/xinzhuma/monodle)            | Delving into Localization Errors for Monocular 3D Object Detection       |
 | 3DV 2024  | MonoLSS     | [monolss github](https://github.com/Traffic-X/MonoLSS/)          | Learnable Sample Selection For Monocular 3D Detection                    |
-|           | TTFNet      |                                                               |                                                                          |
+| Genshin   | TTFNet      |                                                               |                                                                          |
 | community | ultralytics | [ultralytics github](https://github.com/ultralytics/ultralytics) | YOLOv8/v11+v9/v10                                                        |
 | community | netron      | [netron web](https://netron.app/)                                | Visualizer for neural network, deep learning and machine learning models |
 
