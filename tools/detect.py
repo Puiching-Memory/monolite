@@ -74,7 +74,7 @@ if __name__ == "__main__":
         map_location=device,
         weights_only=True,
     )
-    model.load_state_dict(checkpoint_dict)
+    model.load_state_dict(checkpoint_dict['model'])
     model.eval()
     model = model.to(device)
 

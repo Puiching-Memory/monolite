@@ -40,7 +40,8 @@ try:
     local_rank = int(os.environ["LOCAL_RANK"])
 except:
     local_rank = -1
-
+    
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 pid = os.getpid()
 pcontext = psutil.Process(pid)
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
@@ -86,7 +87,7 @@ def train(
                 inputs = inputs.to(device)
                 targets = {key: value.to(device) for key, value in targets.items()}
                 with torch.autocast(
-                    device_type="cuda", dtype=torch.float16, enabled=trainner.is_amp()
+                    device_type="cuda" if torch.cuda.is_available() else "cpu", enabled=trainner.is_amp()
                 ):
                     forward_time = time.time_ns()
                     outputs = model(inputs)
@@ -198,8 +199,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
     # 初始化swanlab,启动$swanlab watch ./logs
     swanlab.init(
         project="monolite",
