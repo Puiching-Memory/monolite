@@ -44,7 +44,8 @@ def export(model, device,test_loader, logger):
                 output_names=output.keys(),
             )
         break
-
+    
+    # simplify onnx model
     model = onnx.load(os.path.join(args.cfg, "checkpoint", "model.onnx"))
     onnx.checker.check_model(model)
     # TODO:not support opset > 20 yet
