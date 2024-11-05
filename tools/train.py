@@ -1,5 +1,8 @@
 import sys
 import os
+
+import torch.nn.intrinsic
+
 sys.path.append(os.path.abspath("./"))
 
 from lib.utils.logger import logger, build_progress
@@ -17,11 +20,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.nn.parallel import DistributedDataParallel as DDP
-import torch.distributed
 import torch.amp
 import numpy as np
 import random
+
+torch.backends.cudnn.enabled = True
+torch.backends.cudnn.benchmark = True
 
 import importlib
 import argparse
@@ -35,13 +39,12 @@ import psutil
 try:
     local_rank = int(os.environ["LOCAL_RANK"])
 except:
-    local_rank = 0
-os.environ["MASTER_ADDR"] = "localhost"
-os.environ["MASTER_PORT"] = "1145"
-os.environ["USE_LIBUV"] = "0" # FIXME:https://pytorch.org/tutorials/intermediate/TCPStore_libuv_backend.html
+    local_rank = -1
 
-
+pid = os.getpid()
+pcontext = psutil.Process(pid)
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
+
 
 def train(
     model: torch.nn.Module,
@@ -110,10 +113,7 @@ def train(
                     **loss_info,
                     "cpu(%)": round(pcontext.cpu_percent(), 2),
                     "ram(%)": round(pcontext.memory_percent(), 2),
-                    **{
-                        f"cuda/{k}": v
-                        for k, v in torch.cuda.memory_stats(device=device).items()
-                    },  # cuda信息
+                    **{f"cuda/{k}": v for k, v in torch.cuda.memory_stats(device=device).items()}, # cuda信息
                 }
                 swanlab.log(info)
 
@@ -197,20 +197,9 @@ if __name__ == "__main__":
         help="path to config file",
     )
     args = parser.parse_args()
-    device = torch.device(f"cuda:{local_rank}" if torch.cuda.is_available() else "cpu")
-    #local_rank = int(os.environ["LOCAL_RANK"])
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    torch.distributed.init_process_group(
-        "gloo" if sys.platform == "win32" else "nccl",
-        rank=local_rank,
-        world_size=torch.cuda.device_count(),
-    )
-    torch.cuda.set_device(local_rank)
-
-    pid = os.getpid()
-    pcontext = psutil.Process(pid)
-
-
     # 初始化swanlab,启动$swanlab watch ./logs
     swanlab.init(
         project="monolite",
@@ -224,15 +213,12 @@ if __name__ == "__main__":
 
     # 导入训练配置
     trainner: TrainerBase = importlib.import_module("trainner").trainner()
-    torch.backends.cudnn.enabled = trainner.is_cudnn()
-    torch.backends.cudnn.benchmark = True
 
     # 导入模型
     model: torch.nn.Module = importlib.import_module("model").model()
-    model = model.to(device)
-    model = DDP(model, device_ids=[local_rank], output_device=local_rank,find_unused_parameters=True)
     # model = torch.compile(model) # Not support in windows
-
+    model = model.to(device)
+    
     # 导入数据集
     data_set: DataSetBase = importlib.import_module("dataset").data_set()
 
@@ -272,7 +258,7 @@ if __name__ == "__main__":
     logger.info(data_set)
     logger.info(optimizer)
     logger.info(scheduler)
-
+    
     train(
         model,
         trainner,
