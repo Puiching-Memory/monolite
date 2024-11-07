@@ -29,6 +29,7 @@ import onnx
 
 
 def export(model, device,test_loader, logger):
+    logger.info(f"Forward once to generate onnx model ...")
     for inputs, targets, data_info in test_loader:
         inputs = inputs.to(device)
         output = model(inputs)
@@ -43,15 +44,17 @@ def export(model, device,test_loader, logger):
                 input_names=["input"],
                 output_names=output.keys(),
             )
+            logger.info(f"Successfully exported ONNX model to {os.path.join(args.cfg, "checkpoint", "model.onnx")}")
         break
     
+    logger.info("Simplifying ONNX model ...")
     # simplify onnx model
     model = onnx.load(os.path.join(args.cfg, "checkpoint", "model.onnx"))
     onnx.checker.check_model(model)
     # TODO:not support opset > 20 yet
     model_simp, check = simplify(model) 
     onnx.save(model_simp, os.path.join(args.cfg, "checkpoint", "model_simp.onnx"))
-
+    logger.info(f"Successfully exported ONNX model to {os.path.join(args.cfg, "checkpoint", "model_simp.onnx")}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Monolite detection script")
@@ -83,7 +86,6 @@ if __name__ == "__main__":
     print(
         f"\n{summary(model, input_size=(data_set.get_bath_size(),3,384,1280),mode='train',verbose=0)}"
     )
-    logger.info(data_set)
 
     export(
         model,

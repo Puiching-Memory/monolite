@@ -46,7 +46,7 @@ class data_set(DataSetBase):
             shuffle=True,
             pin_memory=True,
             drop_last=True,
-            persistent_workers=True,
+            persistent_workers=True, # https://github.com/pytorch/pytorch/issues/13246
             prefetch_factor=2,
         )
 

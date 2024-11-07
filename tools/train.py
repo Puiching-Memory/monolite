@@ -84,6 +84,7 @@ def train(
             model.train()
             for i, (inputs, targets, data_info) in enumerate(train_loader):
                 optimizer.zero_grad()
+                #inputs = inputs.to(device,memory_format=torch.channels_last)
                 inputs = inputs.to(device)
                 targets = {key: value.to(device) for key, value in targets.items()}
                 with torch.autocast(
@@ -216,7 +217,6 @@ if __name__ == "__main__":
     # 导入模型
     model: torch.nn.Module = importlib.import_module("model").model()
     # model = torch.compile(model) # Not support in windows
-    model = model.to(device)
     
     # 导入数据集
     data_set: DataSetBase = importlib.import_module("dataset").data_set()
@@ -249,6 +249,9 @@ if __name__ == "__main__":
         optimizer.load_state_dict(checkpoint_dict["optimizer"])
         scheduler.load_state_dict(checkpoint_dict["scheduler"])
         trainner.set_start_epoch(checkpoint_dict["epoch"])
+    
+    #model = model.to(device,memory_format=torch.channels_last)
+    model = model.to(device)
 
     # 打印基本信息
     print(

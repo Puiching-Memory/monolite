@@ -163,17 +163,17 @@ class DySample(nn.Module):
 
     def sample(self, x, offset):
         B, _, H, W = offset.shape
-        offset = offset.view(B, 2, -1, H, W)
+        offset = offset.reshape(B, 2, -1, H, W)
         coords_h = torch.arange(H) + 0.5
         coords_w = torch.arange(W) + 0.5
         coords = torch.stack(torch.meshgrid([coords_w, coords_h])
                              ).transpose(1, 2).unsqueeze(1).unsqueeze(0).type(x.dtype).to(x.device)
-        normalizer = torch.tensor([W, H], dtype=x.dtype, device=x.device).view(1, 2, 1, 1, 1)
+        normalizer = torch.tensor([W, H], dtype=x.dtype, device=x.device).reshape(1, 2, 1, 1, 1)
         coords = 2 * (coords + offset) / normalizer - 1
-        coords = F.pixel_shuffle(coords.view(B, -1, H, W), self.scale).view(
+        coords = F.pixel_shuffle(coords.reshape(B, -1, H, W), self.scale).reshape(
             B, 2, -1, self.scale * H, self.scale * W).permute(0, 2, 3, 4, 1).contiguous().flatten(0, 1)
         return F.grid_sample(x.reshape(B * self.groups, -1, H, W), coords, mode='bilinear',
-                             align_corners=False, padding_mode="border").view(B, -1, self.scale * H, self.scale * W)
+                             align_corners=False, padding_mode="border").reshape(B, -1, self.scale * H, self.scale * W)
 
     def forward_lp(self, x):
         if hasattr(self, 'scope'):
