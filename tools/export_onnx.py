@@ -6,21 +6,7 @@ sys.path.append(os.path.abspath("./"))
 from lib.utils.logger import logger
 from lib.cfg.base import DataSetBase
 
-try:
-    local_rank = int(os.environ["LOCAL_RANK"])
-except:
-    local_rank = -1
-
-
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import torch.amp
-
-torch.backends.cudnn.enabled = True
-torch.backends.cudnn.benchmark = True
-
 import importlib
 import argparse
 from torchinfo import summary

@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from typing import Any
 
+# TODO: MixUP3D https://github.com/Traffic-X/MonoLSS/blob/main/lib/datasets/kitti.py
 
 class AugTest(DualTransform):
     def apply(self, img: np.ndarray, *args: Any, **params: Any) -> np.ndarray:
