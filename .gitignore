@@ -1,6 +1,7 @@
 __pycache__
 *.pth
 temp.png
+temp.jpg
 _*.py
 logs/
 swanlog/

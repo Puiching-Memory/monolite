@@ -1,4 +1,4 @@
-# NOTE: install torch and torchvision with CUDA 12.4 first!
+# NOTE: install torch with CUDA 12.4 first!
 
 # install datasets tools
 # nuscenes-devkit==1.1.11 # Not support python 3.12
@@ -17,8 +17,9 @@ onnxruntime-gpu==1.20.0
 onnxscript==0.1.0.dev20241102
 onnxsim==0.4.36
 matplotlib==3.9.2
-open3d==0.18.0 -f https://www.open3d.org/docs/latest/getting_started.html
+open3d==0.18.0 # https://www.open3d.org/docs/latest/getting_started.html
 #grad-cam==1.5.4
+albumentations==1.4.21
 
 # check if torch.complie is supported on windows
 # https://huggingface.co/madbuda/triton-windows-builds/tree/main
