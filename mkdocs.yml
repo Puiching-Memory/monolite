@@ -1,0 +1,4 @@
+site_name: monolite
+site_url: https://puiching-memory.github.io/monolite/
+theme:
+  name: material
