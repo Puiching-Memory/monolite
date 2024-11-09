@@ -18,9 +18,9 @@ from lib.utils.logger import logger
 class loss(LossBase):
     def __init__(self):
         pass
-    
+
     def __call__(
-        self, output: dict[torch.Tensor], target: dict[torch.Tensor]
+        self, output: tuple[torch.Tensor, ...], target: dict[torch.Tensor]
     ) -> tuple[torch.Tensor, dict[torch.Tensor]]:
         """
         计算损失函数
@@ -41,19 +41,19 @@ class loss(LossBase):
         #     torch.clamp(output["heatmap"].sigmoid_(), min=1e-4, max=1 - 1e-4),
         #     target["heatmap"],
         # )
+
         loss_heatmap = varifocal_loss(
-            torch.sigmoid(output["heatmap"]),
-            #output["heatmap"],
+            torch.sigmoid(output[6]),
             target["heatmap"],
         )
 
         loss = loss_heatmap
         loss_info = {"loss_heatmap": loss_heatmap}
 
-        logger.info(output["heatmap"])
+        logger.info(output[6])
         logger.warning(target["heatmap"])
-        print(output["heatmap"].shape, target["heatmap"].shape)
-        print(output["heatmap"].dtype, target["heatmap"].dtype)
+        print(output[6].shape, target["heatmap"].shape)
+        print(output[6].dtype, target["heatmap"].dtype)
         logger.info(loss)
 
         return loss, loss_info
@@ -64,13 +64,15 @@ class loss(LossBase):
 
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
+
     B, num_classes, H, W = 16, 2, 48, 160
-    
-    logits = torch.rand([B, num_classes, H, W],dtype=torch.float16,requires_grad=True,device=device)
-    #logits = logits.reshape(B,H,W,num_classes)
-    labels = torch.rand([B, num_classes, H, W],dtype=torch.float64,device=device)
-    #labels = torch.randint(0,num_classes,[B, H, W])
+
+    logits = torch.rand(
+        [B, num_classes, H, W], dtype=torch.float16, requires_grad=True, device=device
+    )
+    # logits = logits.reshape(B,H,W,num_classes)
+    labels = torch.rand([B, num_classes, H, W], dtype=torch.float64, device=device)
+    # labels = torch.randint(0,num_classes,[B, H, W])
     print(logits, labels)
     print(logits.shape, labels.shape)
     print(logits.dtype, labels.dtype)

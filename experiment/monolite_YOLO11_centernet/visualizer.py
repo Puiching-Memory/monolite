@@ -30,14 +30,14 @@ class visualizer(VisualizerBase):
         )
 
     def decode_output(
-        self, image: torch.Tensor, output: dict[torch.Tensor]
+        self, image: torch.Tensor, output: tuple[torch.Tensor, ...]
     ) -> dict[np.ndarray]:
         # 解码image
         image = self.image_transforms(image)
         image = image[0].permute(1, 2, 0).cpu().detach().numpy()  # (384, 1280, 3)
 
         # 解码heatmap
-        heatmap = output["heatmap"][0].sigmoid_().cpu().detach().numpy()  # (C, 48, 160)
+        heatmap = output[6][0].sigmoid_().cpu().detach().numpy()  # (C, 48, 160)
         heatmap = heatmap * 255.0
         heatmap = heatmap.astype(np.uint8)
 
@@ -50,23 +50,21 @@ class visualizer(VisualizerBase):
         heatmap_cls1 = cv2.resize(heatmap_cls1, (1280, 384))
 
         # 映射颜色图
-        heatmap_backgroud = cv2.applyColorMap(
-            heatmap_backgroud, cv2.COLORMAP_VIRIDIS
-        )
-        heatmap_cls1 = cv2.applyColorMap(
-            heatmap_cls1, cv2.COLORMAP_VIRIDIS
-        )
+        heatmap_backgroud = cv2.applyColorMap(heatmap_backgroud, cv2.COLORMAP_VIRIDIS)
+        heatmap_cls1 = cv2.applyColorMap(heatmap_cls1, cv2.COLORMAP_VIRIDIS)
 
         # 合并图像
         image_backgroud = cv2.addWeighted(image, 0.5, heatmap_backgroud, 0.5, 0)
         image_cls1 = cv2.addWeighted(image, 0.5, heatmap_cls1, 0.5, 0)
         # print(heatmap, heatmap.shape)
 
-        cv2.imwrite(os.path.join(self.save_path, "output_backgroud.jpg"), image_backgroud)
+        cv2.imwrite(
+            os.path.join(self.save_path, "output_backgroud.jpg"), image_backgroud
+        )
         cv2.imwrite(os.path.join(self.save_path, "output_cls1.jpg"), image_cls1)
 
         return {"output_backgroud": image_backgroud, "output_cls1": image_cls1}
-    
+
     def decode_target(
         self, image: torch.Tensor, output: dict[torch.Tensor]
     ) -> dict[np.ndarray]:
@@ -88,19 +86,17 @@ class visualizer(VisualizerBase):
         heatmap_cls1 = cv2.resize(heatmap_cls1, (1280, 384))
 
         # 映射颜色图
-        heatmap_backgroud = cv2.applyColorMap(
-            heatmap_backgroud, cv2.COLORMAP_VIRIDIS
-        )
-        heatmap_cls1 = cv2.applyColorMap(
-            heatmap_cls1, cv2.COLORMAP_VIRIDIS
-        )
+        heatmap_backgroud = cv2.applyColorMap(heatmap_backgroud, cv2.COLORMAP_VIRIDIS)
+        heatmap_cls1 = cv2.applyColorMap(heatmap_cls1, cv2.COLORMAP_VIRIDIS)
 
         # 合并图像
         image_backgroud = cv2.addWeighted(image, 0.5, heatmap_backgroud, 0.5, 0)
         image_cls1 = cv2.addWeighted(image, 0.5, heatmap_cls1, 0.5, 0)
         # print(heatmap, heatmap.shape)
 
-        cv2.imwrite(os.path.join(self.save_path, "target_backgroud.jpg"), image_backgroud)
+        cv2.imwrite(
+            os.path.join(self.save_path, "target_backgroud.jpg"), image_backgroud
+        )
         cv2.imwrite(os.path.join(self.save_path, "target_cls1.jpg"), image_cls1)
 
         return {"target_backgroud": image_backgroud, "target_cls1": image_cls1}

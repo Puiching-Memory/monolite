@@ -10,31 +10,40 @@ import torch
 import importlib
 import argparse
 from torchinfo import summary
+import torch_tensorrt
 
 
-def export(model, device,test_loader, logger):
-    logger.info(f"Forward once to generate Torch JIT model ...")
+def export(model, device, test_loader, logger):
+    logger.info(f"Forward once to generate TensorRT model (exported_program) ...")
     for inputs, targets, data_info in test_loader:
-        inputs = inputs.to(device)  # (1,3,384,1280)
-        model = torch.jit.script(model)
-        torch.jit.save(model, os.path.join(args.cfg, "checkpoint", "model.pt"))
-        logger.info(f"Successfully exported Torch JIT model to {os.path.join(args.cfg, "checkpoint", "model.pt")}")
+        inputs = [inputs.to("cuda")] # FIXME: half() causes error
+
+        enabled_precisions = {torch.float}
+        trt_ts_module = torch_tensorrt.compile(
+            model,ir="dynamo", inputs=inputs, enabled_precisions=enabled_precisions
+        )
+        torch_tensorrt.save(trt_ts_module, os.path.join(args.cfg, "checkpoint", "model.ep"),output_format="exported_program",inputs=inputs)
+        logger.info(
+            f"Successfully exported TensorRT model (exported_program) to {os.path.join(args.cfg, "checkpoint", "model.ep")}"
+        )
         break
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Monolite export script")
     parser.add_argument("--cfg", dest="cfg", help="path to config file")
     args = parser.parse_args()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    assert torch.cuda.is_available(), "CUDA is not available"
+    device = torch.device("cuda")
 
     # 添加模块搜索路径
     sys.path.append(args.cfg)
 
     # 导入模型
-    model:torch.nn.Module = importlib.import_module("model").model()
+    model: torch.nn.Module = importlib.import_module("model").model()
     model.eval()
-    
+
     checkpoint_dict = torch.load(
         os.path.join(args.cfg, "checkpoint", "model.pth"),
         map_location=device,
@@ -43,9 +52,8 @@ if __name__ == "__main__":
     model.load_state_dict(checkpoint_dict["model"])
     model = model.to(device)
 
-    
     # 导入数据集
-    data_set:DataSetBase = importlib.import_module("dataset").data_set()
+    data_set: DataSetBase = importlib.import_module("dataset").data_set()
 
     # 打印基本信息
     print(

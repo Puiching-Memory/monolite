@@ -17,8 +17,8 @@ import onnx
 def export(model, device,test_loader, logger):
     logger.info(f"Forward once to generate onnx model ...")
     for inputs, targets, data_info in test_loader:
-        inputs = inputs.to(device)
-        output = model(inputs)
+        #inputs = inputs.to(device)
+        #output = model(inputs)
         with open(os.path.join(args.cfg, "checkpoint", "model.onnx"), "wb") as f:
             onnx_program = torch.onnx.export(
                 model,
@@ -27,8 +27,8 @@ def export(model, device,test_loader, logger):
                 verbose=False,
                 dynamo=False,
                 opset_version=20,
-                input_names=["input"],
-                output_names=output.keys(),
+                #input_names=["input"],
+                #output_names=[""],
             )
             logger.info(f"Successfully exported ONNX model to {os.path.join(args.cfg, "checkpoint", "model.onnx")}")
         break
@@ -43,7 +43,7 @@ def export(model, device,test_loader, logger):
     logger.info(f"Successfully exported ONNX model to {os.path.join(args.cfg, "checkpoint", "model_simp.onnx")}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Monolite detection script")
+    parser = argparse.ArgumentParser(description="Monolite export script")
     parser.add_argument("--cfg", dest="cfg", help="path to config file")
     args = parser.parse_args()
 

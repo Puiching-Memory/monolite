@@ -124,7 +124,17 @@ python tools\export_onnx.py --cfg C:\workspace\github\monolite\experiment\monoli
 
 ### TensorRT
 
-TODO
+##### torchscript
+
+```
+python tools\export_ts.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
+```
+
+##### exported_program
+
+```
+python tools\export_ep.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
+```
 
 ### Torch_JIT
 
