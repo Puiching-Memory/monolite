@@ -44,104 +44,6 @@ Note that we are an engineering project, the code will be updated synchronously,
 | train | 1.8     | 2.2     | 2          |             |
 | eval  | 2.2     | 2.0     | 1          | 43          |
 
-# Environment环境
-
-### 虚拟环境
-
-依据此[pytorch_issue](https://github.com/pytorch/pytorch/issues/138506)中的讨论，我们将虚拟环境迁移至[miniforge](https://github.com/conda-forge/miniforge)
-
-```
-conda create -n monolite python=3.12
-```
-
-### 前置组件
-
-| 系统    | 前置组件           | 下载URL                                                                                             | 备注                 |
-| ------- | ------------------ | --------------------------------------------------------------------------------------------------- | -------------------- |
-| windows | Visual Studio 2022 | [download](https://visualstudio.microsoft.com/zh-hans/vs/)                                             | 注意不同版本间的冲突 |
-| windows | Cmake              | [download](https://github.com/Kitware/CMake/releases/download/v3.30.5/cmake-3.30.5-windows-x86_64.msi) | 3.30.5               |
-| windows | MSbuild            | 通过VS2022下载                                                                                      |                      |
-| windows | MSVC               | 通过VS2022下载                                                                                      |                      |
-
-### pip
-
-```
-pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
-pip install -r requirements.txt
-```
-
-### ~~Docker~~（暂不可用）
-
-```console
-set DOCKER_BUILDKIT=0
-docker build -t monolite .
-docker run -d  --privileged=true --net host --name {any_name} --shm-size 4G --ulimit memlock=-1 --gpus=all -it -v C:\:/windows/ monolite:latest /bin/bash
-```
-
-### Docker mirror
-
-https://github.com/DaoCloud/public-image-mirror
-
-### Dataset数据集
-
-#### Kitti
-
-TODO
-
-# Pre-training model zoo预训练模型
-
-| Model             | URL                  | Trainning log                                                                                     |
-| ----------------- | -------------------- | ------------------------------------------------------------------------------------------------- |
-| MonoLite_Baseline | [百度网盘][谷歌网盘] | [https://swanlab.cn/@Sail2Dream/monolite/overview](https://swanlab.cn/@Sail2Dream/monolite/overview) |
-
-# Inference推理
-
-```
-python tools\detect.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
-```
-
-# Train训练
-
-```
-python tools\train.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
-```
-
-### Train with your own Dataset自定义数据集训练
-
-TODO
-
-# Eval评估
-
-TODO
-
-# Export导出
-
-### ONNX
-
-```
-python tools\export_onnx.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
-```
-
-### TensorRT
-
-##### torchscript
-
-```
-python tools\export_ts.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
-```
-
-##### exported_program
-
-```
-python tools\export_ep.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
-```
-
-### Torch_JIT
-
-```
-python tools\export_pt.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
-```
-
 # Confirm致谢
 
 我们衷心感谢所有为这个神经网络开源项目做出贡献的个人和组织。特别感谢以下贡献者：
@@ -158,20 +60,23 @@ python tools\export_pt.py --cfg C:\workspace\github\monolite\experiment\monolite
 
 再次感谢每一位支持者，你们的贡献是无价的。
 
-# 正在构建MkDocs
+---
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+以下是评论区,如果不能正常显示请报告issue.
 
-## Commands
-
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
-
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+<script src="https://giscus.app/client.js"
+        data-repo="Puiching-Memory/monolite"
+        data-repo-id="R_kgDOM5JIxw"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOM5JIx84CjQa5"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="zh-CN"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async>
+</script>

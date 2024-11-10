@@ -1,4 +1,67 @@
+# https://squidfunk.github.io/mkdocs-material/setup/
 site_name: monolite
 site_url: https://puiching-memory.github.io/monolite/
 theme:
   name: material
+  features:
+    - navigation.footer
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.prune
+    - navigation.indexes
+    - toc.follow
+    - navigation.top
+  language: zh # 默认语言
+  palette:
+    # 调色板依据系统主题自动设置
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+      primary: indigo # 主色调
+
+    # 调色板切换为亮色模式
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+      primary: indigo # 主色调
+
+    # 调色板切换为暗色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+      primary: indigo # 主色调
+
+nav: # 默认路由
+  - Home: index.md
+  - Install: install.md
+  - Usage: usage.md
+  - dev: dev.md
+plugins: # 插件
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+      fallback_to_build_date: true
+  - git-authors
+extra:
+  social: # 底端额外链接
+    - icon: fontawesome/brands/github
+      link: https://github.com/Puiching-Memory/
+  alternate: # 多语言
+    - name: 中文(简体)
+      link: /zh/
+      lang: zh
+    - name: English
+      link: /en/
+      lang: en
+repo_url: https://github.com/Puiching-Memory/monolite # github状态标签
+repo_name: Puiching-Memory/monolite

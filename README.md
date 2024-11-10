@@ -146,13 +146,14 @@ python tools\export_pt.py --cfg C:\workspace\github\monolite\experiment\monolite
 
 我们衷心感谢所有为这个神经网络开源项目做出贡献的个人和组织。特别感谢以下贡献者：
 
-| type      | name        | url                                                           | title                                                                    |
-| --------- | ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| CVPR 2021 | MonoDLE     | [monodle github](https://github.com/xinzhuma/monodle)            | Delving into Localization Errors for Monocular 3D Object Detection       |
-| 3DV 2024  | MonoLSS     | [monolss github](https://github.com/Traffic-X/MonoLSS/)          | Learnable Sample Selection For Monocular 3D Detection                    |
-|           | TTFNet      |                                                               |                                                                          |
-| community | ultralytics | [ultralytics github](https://github.com/ultralytics/ultralytics) | YOLOv8/v11+v9/v10                                                        |
-| community | netron      | [netron web](https://netron.app/)                                | Visualizer for neural network, deep learning and machine learning models |
+| type      | name            | url                                                           | title                                                                    |
+| --------- | --------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| CVPR 2021 | MonoDLE         | [monodle github](https://github.com/xinzhuma/monodle)            | Delving into Localization Errors for Monocular 3D Object Detection       |
+| 3DV 2024  | MonoLSS         | [monolss github](https://github.com/Traffic-X/MonoLSS/)          | Learnable Sample Selection For Monocular 3D Detection                    |
+|           | TTFNet          |                                                               |                                                                          |
+| community | ultralytics     | [ultralytics github](https://github.com/ultralytics/ultralytics) | YOLOv8/v11+v9/v10                                                        |
+| community | netron          | [netron web](https://netron.app/)                                | Visualizer for neural network, deep learning and machine learning models |
+| community | mkdocs-material | [mkdocs github](https://github.com/squidfunk/mkdocs-material)    | Documentation that simply works                                          |
 
 正是这种协作和共享的精神，让开源项目得以蓬勃发展，并为科技进步做出贡献。我们期待未来有更多的合作和创新，共同推动人工智能领域的发展。
 
