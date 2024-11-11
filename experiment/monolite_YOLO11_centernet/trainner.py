@@ -13,7 +13,7 @@ from lib.cfg.base import TrainerBase
 class trainner(TrainerBase):
     def __init__(self):
         self.start_epoch = 0
-        self.end_epoch = 5
+        self.end_epoch = 1
         self.save_path = r"C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet\checkpoint"
         self.resume_checkpoint = None
         #self.resume_checkpoint = "C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet\checkpoint\model.pth"

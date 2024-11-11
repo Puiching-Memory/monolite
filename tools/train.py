@@ -1,8 +1,6 @@
 import sys
 import os
 
-import torch.nn.intrinsic
-
 sys.path.append(os.path.abspath("./"))
 
 from lib.utils.logger import logger, build_progress
@@ -35,12 +33,13 @@ import time
 import swanlab
 import datetime
 import psutil
+from typing import Optional
 
 try:
     local_rank = int(os.environ["LOCAL_RANK"])
 except:
     local_rank = -1
-    
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 pid = os.getpid()
 pcontext = psutil.Process(pid)
@@ -49,6 +48,7 @@ pcontext = psutil.Process(pid)
 
 def train(
     model: torch.nn.Module,
+    ema_model: Optional[torch.nn.Module],
     trainner: TrainerBase,
     device,
     train_loader: torch.utils.data.DataLoader,
@@ -84,11 +84,12 @@ def train(
             model.train()
             for i, (inputs, targets, data_info) in enumerate(train_loader):
                 optimizer.zero_grad()
-                #inputs = inputs.to(device,memory_format=torch.channels_last)
+                # inputs = inputs.to(device,memory_format=torch.channels_last)
                 inputs = inputs.to(device)
                 targets = {key: value.to(device) for key, value in targets.items()}
                 with torch.autocast(
-                    device_type="cuda" if torch.cuda.is_available() else "cpu", enabled=trainner.is_amp()
+                    device_type="cuda" if torch.cuda.is_available() else "cpu",
+                    enabled=trainner.is_amp(),
                 ):
                     forward_time = time.time_ns()
                     outputs = model(inputs)
@@ -101,6 +102,9 @@ def train(
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
+
+                if ema_model is not None:
+                    ema_model.update_parameters(model)
 
                 info = {
                     "epoch": epoch_now,
@@ -115,7 +119,10 @@ def train(
                     **loss_info,
                     "cpu(%)": round(pcontext.cpu_percent(), 2),
                     "ram(%)": round(pcontext.memory_percent(), 2),
-                    **{f"cuda/{k}": v for k, v in torch.cuda.memory_stats(device=device).items()}, # cuda信息
+                    **{
+                        f"cuda/{k}": v
+                        for k, v in torch.cuda.memory_stats(device=device).items()
+                    },  # cuda信息
                 }
                 swanlab.log(info)
 
@@ -148,6 +155,7 @@ def train(
                 progress["System"].update(
                     task_ids["jobId_ram_info"], completed=info["ram(%)"]
                 )
+                # break
 
             scheduler.step()
 
@@ -189,6 +197,19 @@ def train(
                 total=trainner.get_end_epoch(),
             )
 
+    if ema_model is not None:
+        logger.info("update bn with ema model, it may takes few minutes ...")
+        torch.optim.swa_utils.update_bn(train_loader, ema_model, device=device)
+        logger.info(
+            f"ema checkpoint saved to {os.path.join(trainner.get_save_path(), "model_ema.pth")}"
+        )
+        torch.save(
+            {
+                "model": ema_model.state_dict(),
+            },
+            os.path.join(trainner.get_save_path(), "model_ema.pth"),
+        )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Monolite training script")
@@ -217,7 +238,7 @@ if __name__ == "__main__":
     # 导入模型
     model: torch.nn.Module = importlib.import_module("model").model()
     # model = torch.compile(model) # Not support in windows
-    
+
     # 导入数据集
     data_set: DataSetBase = importlib.import_module("dataset").data_set()
 
@@ -249,9 +270,14 @@ if __name__ == "__main__":
         optimizer.load_state_dict(checkpoint_dict["optimizer"])
         scheduler.load_state_dict(checkpoint_dict["scheduler"])
         trainner.set_start_epoch(checkpoint_dict["epoch"])
-    
-    #model = model.to(device,memory_format=torch.channels_last)
+
+    # model = model.to(device,memory_format=torch.channels_last)
     model = model.to(device)
+
+    # Enabel this line to use ema model
+    # ema_model = torch.optim.swa_utils.AveragedModel(
+    #     model, multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(0.999)
+    # )
 
     # 打印基本信息
     print(
@@ -260,9 +286,10 @@ if __name__ == "__main__":
     logger.info(data_set)
     logger.info(optimizer)
     logger.info(scheduler)
-    
+
     train(
         model,
+        None,
         trainner,
         device,
         data_set.get_train_loader(),

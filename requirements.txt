@@ -13,7 +13,7 @@ albumentations==1.4.21
 # log tools (must be installed)
 loguru==0.7.2
 rich==13.9.4
-swanlab==0.3.23
+swanlab==0.3.25
 #tqdm==4.66.5
 
 # export tools (optional)
@@ -31,6 +31,9 @@ monkeytype==23.3.0
 
 # optimizer tools (optional)
 prodigyopt==1.0
+
+# hyperparameter (optional)
+optuna==4.0.0
 
 # doc tools (optional)
 mkdocs-material[imaging]==9.5.44
