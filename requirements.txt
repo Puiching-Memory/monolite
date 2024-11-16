@@ -33,7 +33,7 @@ monkeytype==23.3.0
 prodigyopt==1.0
 
 # hyperparameter (optional)
-optuna==4.0.0
+optuna==4.1.0
 
 # doc tools (optional)
 mkdocs-material[imaging]==9.5.44
