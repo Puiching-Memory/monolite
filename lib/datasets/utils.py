@@ -123,7 +123,7 @@ def draw_msra_gaussian(heatmap, center, sigma):
     return heatmap
 
 
-def calculate_links(num_points):
+def calculate_lines(num_points,group_size=8):
     """
     接受点的数量作为输入，并返回一个列表，列表中包含所有可能的点对链接方式
     ---
@@ -132,14 +132,14 @@ def calculate_links(num_points):
     Returns:
         links: list, 包含所有可能的点对链接方式
     """
-    # 确保输入的点的数量是8的倍数
-    if num_points % 8 != 0:
+    # 确保输入的点的数量是group_size的倍数
+    if num_points % group_size != 0:
         raise ValueError("The number of points must be a multiple of 8.")
 
     # 计算所有可能的链接方式
     links = []
-    for i in range(num_points // 8):
-        points = list(range(8 * i, 8 * (i + 1)))  # 每8个点为一组
+    for i in range(num_points // group_size):
+        points = list(range(group_size * i, group_size * (i + 1)))
         for pair in itertools.combinations(points, 2):  # 计算每组中的所有点对
             links.append(pair)
 

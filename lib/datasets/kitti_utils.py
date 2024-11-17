@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from typing import Union, Optional
 
 ################  Object3D  ##################
 
@@ -76,7 +77,7 @@ class Object3d(object):
         corners3d = np.vstack([x_corners, y_corners, z_corners])  # (3, 8)
         corners3d = np.dot(R, corners3d).T
         corners3d = corners3d + self.pos
-        
+
         return corners3d
 
     def to_bev_box2d(self, oblique=True, voxel_size=0.1):
@@ -162,17 +163,18 @@ def get_calib_from_file(calib_file):
 
 
 class Calibration(object):
-    def __init__(self, calib_file):
-        if isinstance(calib_file, str):
-            calib = get_calib_from_file(calib_file)
-        else:
-            calib = calib_file
+    def __init__(self, calib: Union[str, dict]):
 
+        if isinstance(calib, str):
+            calib = get_calib_from_file(calib)
+
+        self.P0 = calib["P0"]  # 3 x 4
+        self.P1 = calib["P1"]  # 3 x 4
         self.P2 = calib["P2"]  # 3 x 4
         self.R0 = calib["R0"]  # 3 x 3
         self.V2C = calib["Tr_velo_to_cam"]  # 3 x 4
         self.C2V = self.inverse_rigid_trans(self.V2C)
-        self.imu = calib["Tr_imu_to_velo"]  # 3 x 4
+        self.Tr_imu_to_velo = calib["Tr_imu_to_velo"]  # 3 x 4
 
         # Camera intrinsics and extrinsics
         self.cu = self.P2[0, 2]

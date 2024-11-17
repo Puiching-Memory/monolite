@@ -5,7 +5,6 @@ theme:
   name: material
   features:
     - navigation.footer
-    - navigation.instant
     - navigation.instant.progress
     - navigation.tracking
     - navigation.tabs
@@ -42,26 +41,37 @@ theme:
       primary: indigo # 主色调
 
 nav: # 默认路由
-  - Home: index.md
-  - Install: install.md
-  - Usage: usage.md
-  - dev: dev.md
+  - 主页: index.md
+  - 安装: install.md
+  - 使用手册: usage.md
+  - 开发文档: dev.md
 plugins: # 插件
   - search
+  - git-authors
+  - i18n:
+      docs_structure: folder
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          name: English
+          build: true
+          nav_translations:
+            主页: Home
+            安装: Install
+            使用手册: Usage
+            开发文档: dev
+        - locale: zh
+          name: 中文
+          build: true
+          default: true
   - git-revision-date-localized:
       enable_creation_date: true
       fallback_to_build_date: true
-  - git-authors
+
 extra:
   social: # 底端额外链接
     - icon: fontawesome/brands/github
       link: https://github.com/Puiching-Memory/
-  alternate: # 多语言
-    - name: 中文(简体)
-      link: /zh/
-      lang: zh
-    - name: English
-      link: /en/
-      lang: en
 repo_url: https://github.com/Puiching-Memory/monolite # github状态标签
 repo_name: Puiching-Memory/monolite
