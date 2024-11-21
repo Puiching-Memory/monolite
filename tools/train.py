@@ -44,7 +44,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 pid = os.getpid()
 pcontext = psutil.Process(pid)
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
-
+# os.environ["TORCH_LOGS"] = "+dynamo"
+# os.environ["TORCHDYNAMO_VERBOSE"] = "1" 
 
 def train(
     model: torch.nn.Module,
@@ -81,6 +82,7 @@ def train(
             total=trainner.get_end_epoch(),
         )
         for epoch_now in range(trainner.get_start_epoch(), trainner.get_end_epoch()):
+            epoch_start_time = time.time()
             model.train()
             for i, (inputs, targets, data_info) in enumerate(train_loader):
                 optimizer.zero_grad()
@@ -196,6 +198,8 @@ def train(
                 completed=epoch_now + 1,
                 total=trainner.get_end_epoch(),
             )
+            
+            logger.info(f"epoch {epoch_now+1} finished, time: {time.time()-epoch_start_time:.2f}s")
 
     if ema_model is not None:
         logger.info("update bn with ema model, it may takes few minutes ...")
@@ -237,7 +241,11 @@ if __name__ == "__main__":
 
     # 导入模型
     model: torch.nn.Module = importlib.import_module("model").model()
-    # model = torch.compile(model) # Not support in windows
+    try:
+        logger.warning(f"try to compile model")
+        model = torch.compile(model)
+    except Exception as e:
+        logger.error(f"compile model error: {e}")
 
     # 导入数据集
     data_set: DataSetBase = importlib.import_module("dataset").data_set()
@@ -280,9 +288,9 @@ if __name__ == "__main__":
     # )
 
     # 打印基本信息
-    print(
-        f"\n{summary(model, input_size=(data_set.get_bath_size(),3,384,1280),mode='train',verbose=0,depth=2)}"
-    )
+    # print(
+    #     f"\n{summary(model, input_size=(data_set.get_bath_size(),3,384,1280),mode='train',verbose=0,depth=2)}"
+    # )
     logger.info(data_set)
     logger.info(optimizer)
     logger.info(scheduler)

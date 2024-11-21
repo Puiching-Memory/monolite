@@ -2,6 +2,8 @@
 此测试文件用于测试triton是否能正确编译windows平台上的cuda代码
 ---
 代码支持: https://github.com/woct0rdho/triton-windows
+
+NOTE: 必须有任意GPU可用,windows系统安装MSVC
 """
 
 import torch

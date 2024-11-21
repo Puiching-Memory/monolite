@@ -1,10 +1,13 @@
 __pycache__
-*.pth
 temp.png
 temp.jpg
-_*.py
 logs/
 swanlog/
 output/
 checkpoint/
+*.pth
+_*.py
 *.bkp
+*.exp
+*.lib
+*.obj
