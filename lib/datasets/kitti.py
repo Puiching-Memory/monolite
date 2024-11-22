@@ -118,7 +118,7 @@ class KITTI(data.Dataset):
             heatmap, (int(1280 / 8), int(384 / 8)), interpolation=cv2.INTER_AREA
         )  # 缩放至heatmap大小
         heatmap = np.expand_dims(heatmap, axis=0)  # 增加维度
-
+        
         heatmap_backgroud = np.ones_like(heatmap)  # heatmap背景
         heatmap_backgroud = heatmap_backgroud - heatmap
 

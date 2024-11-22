@@ -25,7 +25,7 @@ if __name__ == "__main__":
             A.HorizontalFlip(p=0.5),
             A.RandomBrightnessContrast(p=0.2),
             # A.TemplateTransform(),
-            AugTest(p=0.5),
+            AugTest(p=0.2),
         ]
     )
 

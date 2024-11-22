@@ -2,6 +2,29 @@ import numpy as np
 import cv2
 from typing import Union, Optional
 
+METAINFO = {
+    "classes": (
+        "Pedestrian",
+        "Cyclist",
+        "Car",
+        "Van",
+        "Truck",
+        "Person_sitting",
+        "Tram",
+        "Misc",
+    ),
+    "palette": [
+        (106, 0, 228),
+        (119, 11, 32),
+        (165, 42, 42),
+        (0, 0, 192),
+        (197, 226, 255),
+        (0, 60, 100),
+        (0, 0, 142),
+        (255, 77, 255),
+    ],
+}
+
 ################  Object3D  ##################
 
 
@@ -33,7 +56,7 @@ class Object3d(object):
         )
         self.dis_to_cam = np.linalg.norm(self.pos)
         self.ry = float(label[14])
-        self.score = float(label[15]) if label.__len__() == 16 else -1.0
+        self.score = float(label[15]) if len(label) == 16 else -1.0
         self.level_str = None
         self.level = self.get_obj_level()
 
@@ -163,6 +186,39 @@ def get_calib_from_file(calib_file):
 
 
 class Calibration(object):
+    """kitti calibration class
+
+    Args:
+        calib (Union[str, dict]): calibration file path or calibration dict
+
+    3d XYZ in <label>.txt are in rect camera coord.
+    2d box xy are in image2 coord
+    Points in <lidar>.bin are in Velodyne coord.
+    y_image2 = P^2_rect * x_rect
+    y_image2 = P^2_rect * R0_rect * Tr_velo_to_cam * x_velo
+    x_ref = Tr_velo_to_cam * x_velo
+    x_rect = R0_rect * x_ref
+
+    P^2_rect = [f^2_u,  0,      c^2_u,  -f^2_u b^2_x;
+                0,      f^2_v,  c^2_v,  -f^2_v b^2_y;
+                0,      0,      1,      0]
+                = K * [1|t]
+
+    image2 coord:
+        ----> x-axis (u)
+    |
+    |
+    v y-axis (v)
+
+    velodyne coord:
+    front x, left y, up z
+
+    rect/ref camera coord:
+    right x, down y, front z
+
+    Ref (KITTI paper): http://www.cvlibs.net/publications/Geiger2013IJRR.pdf
+    """
+
     def __init__(self, calib: Union[str, dict]):
 
         if isinstance(calib, str):
@@ -184,7 +240,7 @@ class Calibration(object):
         self.tx = self.P2[0, 3] / (-self.fu)
         self.ty = self.P2[1, 3] / (-self.fv)
 
-    def cart_to_hom(self, pts):
+    def cart_to_hom(self, pts: np.ndarray) -> np.ndarray:
         """
         :param pts: (N, 3 or 2)
         :return pts_hom: (N, 4 or 3)

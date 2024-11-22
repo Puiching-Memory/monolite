@@ -45,7 +45,8 @@ pid = os.getpid()
 pcontext = psutil.Process(pid)
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
 # os.environ["TORCH_LOGS"] = "+dynamo"
-# os.environ["TORCHDYNAMO_VERBOSE"] = "1" 
+# os.environ["TORCHDYNAMO_VERBOSE"] = "1"
+print(sys.path)
 
 def train(
     model: torch.nn.Module,
@@ -198,8 +199,10 @@ def train(
                 completed=epoch_now + 1,
                 total=trainner.get_end_epoch(),
             )
-            
-            logger.info(f"epoch {epoch_now+1} finished, time: {time.time()-epoch_start_time:.2f}s")
+
+            logger.info(
+                f"epoch {epoch_now+1} finished, time: {time.time()-epoch_start_time:.2f}s"
+            )
 
     if ema_model is not None:
         logger.info("update bn with ema model, it may takes few minutes ...")
@@ -226,13 +229,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # 初始化swanlab,启动$swanlab watch ./logs
-    swanlab.init(
-        project="monolite",
-        experiment_name=f"{os.path.basename(args.cfg)}_{datetime.datetime.now().strftime('%Y/%m/%d_%H:%M:%S')}",
-        # logdir="./logs", # 本地模式
-        # mode="local",
-    )
-
+    try:
+        swanlab.init(
+            project="monolite",
+            experiment_name=f"{os.path.basename(args.cfg)}_{datetime.datetime.now().strftime('%Y/%m/%d_%H:%M:%S')}",
+            # logdir="./logs", # 本地模式
+            # mode="local",
+        )
+    except Exception as e:
+        logger.error(f"{e}\nInit swanlab in local mode")
+        swanlab.init(
+            project="monolite",
+            experiment_name=f"{os.path.basename(args.cfg)}_{datetime.datetime.now().strftime('%Y/%m/%d_%H:%M:%S')}",
+            logdir="./logs",  # 本地模式
+            mode="local",
+        )
     # 添加模块搜索路径
     sys.path.append(args.cfg)
 
