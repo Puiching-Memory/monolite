@@ -50,11 +50,11 @@ class loss(LossBase):
         loss = loss_heatmap
         loss_info = {"loss_heatmap": loss_heatmap}
 
-        logger.info(output[6])
-        logger.warning(target["heatmap"])
-        print(output[6].shape, target["heatmap"].shape)
-        print(output[6].dtype, target["heatmap"].dtype)
-        logger.info(loss)
+        # logger.info(output[6])
+        # logger.warning(target["heatmap"])
+        # print(output[6].shape, target["heatmap"].shape)
+        # print(output[6].dtype, target["heatmap"].dtype)
+        # logger.info(loss)
 
         return loss, loss_info
 

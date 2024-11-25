@@ -46,7 +46,6 @@ pcontext = psutil.Process(pid)
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
 # os.environ["TORCH_LOGS"] = "+dynamo"
 # os.environ["TORCHDYNAMO_VERBOSE"] = "1"
-print(sys.path)
 
 def train(
     model: torch.nn.Module,
@@ -271,6 +270,7 @@ if __name__ == "__main__":
 
     # 导入损失函数
     loss: LossBase = importlib.import_module("loss").loss()
+    loss = torch.compile(loss)
 
     # 导入可视化工具
     visualizer: VisualizerBase = importlib.import_module("visualizer").visualizer()
