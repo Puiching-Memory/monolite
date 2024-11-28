@@ -1,6 +1,7 @@
 __pycache__
 temp.png
 temp.jpg
+.coverage
 logs/
 swanlog/
 output/
@@ -11,3 +12,5 @@ _*.py
 *.exp
 *.lib
 *.obj
+*.html
+*.xml

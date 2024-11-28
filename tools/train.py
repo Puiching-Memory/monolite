@@ -232,8 +232,6 @@ if __name__ == "__main__":
         swanlab.init(
             project="monolite",
             experiment_name=f"{os.path.basename(args.cfg)}_{datetime.datetime.now().strftime('%Y/%m/%d_%H:%M:%S')}",
-            # logdir="./logs", # 本地模式
-            # mode="local",
         )
     except Exception as e:
         logger.error(f"{e}\nInit swanlab in local mode")
