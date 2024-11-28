@@ -6,13 +6,13 @@ sys.path.append(os.path.abspath("./"))
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from lib.models import block
 
 
 class model(nn.Module):
     def __init__(self):
         super().__init__()
-        from lib.models import block
-
+        
         self.backboneP3 = nn.Sequential(
             block.Conv(3, 64, 3, 2),  # 0-P1/2
             block.Conv(64, 128, 3, 2),  # 1-P2/4
@@ -102,5 +102,46 @@ class model(nn.Module):
 
 
 if __name__ == "__main__":
-    model = model()
-    print(model)
+    import math
+    from matplotlib import pyplot as plt
+    from dataset import data_set
+    from lib.cam.cnn_cam import module_feature_saver
+    
+    test_model = model()
+    test_model.eval()
+    
+    dataset = data_set()
+    
+    modle_layers = list(test_model.children())
+    
+    # 注册hook获取模型中间层输出
+    savers = []
+    for layer in modle_layers:
+        savers.append(module_feature_saver(layer))
+    
+    print(f"number of layers: {len(savers)}")
+    
+    # 执行一次推理
+    for inputs, targets, data_info in dataset.get_test_loader():
+        outputs = test_model(inputs)
+        break
+    
+    # 绘图
+    fig, axes = plt.subplots(math.ceil((len(savers)+1)/5),5)
+    axes = axes.flatten()
+    
+    # 绘制输入图像
+    axes[0].imshow(inputs[0].permute(1,2,0))
+    axes[0].title.set_text("input_image")
+    
+    # 绘制中间层输出
+    for index, saver in enumerate(savers):
+        axes[index+1].imshow(saver.temp_feature)
+        axes[index+1].title.set_text(f"{saver.layer_name}-{index}")
+        
+    # # 绘制检测头输出
+    # for index, output in enumerate(outputs):
+    #     axes[index+len(savers)+1].imshow(outputs[index][0][0].detach().numpy())
+    #     axes[index+len(savers)+1].title.set_text(f"output-{index}")
+        
+    plt.show()
