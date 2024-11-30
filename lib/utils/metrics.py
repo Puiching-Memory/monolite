@@ -137,19 +137,33 @@ def make_anchors(feats, strides, grid_cell_offset=0.5):
     return torch.cat(anchor_points), torch.cat(stride_tensor)
 
 
-def clip_coordinates(boxes, img_width, img_height):
+def filter_boxes(boxes, image_width, image_height):
     """
-    修剪坐标，确保它们在图像边界内。
+    Filter out boxes that are outside the image boundaries.
+    
+    Parameters:
+    - boxes (Tensor): Tensor of shape (n, 4) where each row is [x_min, y_min, x_max, y_max].
+    - image_width (int): The width of the image.
+    - image_height (int): The height of the image.
+    
+    Returns:
+    - Tensor: Filtered boxes that are within the image boundaries.
     """
-    mask_index = np.where(
-        (boxes[:, 0] >= img_width)
-        | (boxes[:, 1] >= img_height)
-        | (boxes[:, 2] < 0)
-        | (boxes[:, 3] < 0)
-    )
-    boxes = np.delete(boxes, mask_index, axis=0)
-    return boxes
-
+    # 确保boxes是PyTorch张量
+    boxes = torch.as_tensor(boxes, dtype=torch.float32)
+    
+    # 检查边界框的坐标是否在图像范围内
+    # x_min 和 y_min 应该大于等于0，x_max 和 y_max 应该小于等于图像的宽高
+    condition = (boxes[:, 0] >= 0) & (boxes[:, 1] >= 0) & \
+                (boxes[:, 2] <= image_width) & (boxes[:, 3] <= image_height)
+    
+    # 同时x_max 应该大于 x_min, y_max 应该大于 y_min
+    condition = condition & (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
+    
+    # 根据条件筛选出合法的边界框
+    valid_boxes = boxes[condition]
+    
+    return valid_boxes
 
 def crop_3d_points(
     points: np.ndarray,

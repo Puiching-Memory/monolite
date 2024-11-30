@@ -41,7 +41,7 @@ class model(nn.Module):
             nn.Conv2d(256, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 2, 1, 1, 0),
+            nn.Conv2d(128, 1, 1, 1, 0),
         )
         self.offset3d = nn.Sequential(
             nn.Conv2d(256, 128, 3, 1, 1),

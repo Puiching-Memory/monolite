@@ -14,7 +14,7 @@ sys.path.append(os.path.abspath("./"))
 
 from lib.datasets.kitti_utils import get_objects_from_label
 from lib.datasets.kitti_utils import Calibration, Object3d
-from lib.utils.metrics import xyxy2xywh, clip_coordinates
+from lib.utils.metrics import xyxy2xywh, filter_boxes
 
 
 class KITTI(data.Dataset):
@@ -23,6 +23,7 @@ class KITTI(data.Dataset):
         self.root_dir = root_dir
         self.class_map = class_map
         self.split = split
+        self.max_objects = 50  # 最大物体数
 
         # 载入数据集
         assert split in ["train", "val", "trainval", "test"]
@@ -42,7 +43,7 @@ class KITTI(data.Dataset):
         self.image_transforms = v2.Compose(
             [
                 v2.ToDtype(torch.uint8, scale=True),
-                v2.Resize(size=(384, 1280)),
+                v2.Resize(size=(375, 1242)),
                 v2.ToDtype(torch.float32, scale=True),
                 v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
@@ -52,8 +53,10 @@ class KITTI(data.Dataset):
         img_file = os.path.join(self.image_dir, f"{idx}.png")
         assert os.path.exists(img_file)
         image = torchvision.io.read_image(img_file)  # (C,H,W)
+        raw_image_shape = torch.tensor(image.shape)
         image = self.image_transforms(image)  # 应用变换
-        return image
+        
+        return image, raw_image_shape
 
     def get_image_numpy(self, idx) -> np.ndarray:
         img_file = os.path.join(self.image_dir, f"{idx}.png")
@@ -87,44 +90,37 @@ class KITTI(data.Dataset):
         dataload_time = time.time_ns()
 
         # 获取图像、标签、标定信息
-        image = self.get_image(self.idx_list[index])
+        image,raw_image_shape = self.get_image(self.idx_list[index])
         label = self.get_label(self.idx_list[index])
         calib = self.get_calib(self.idx_list[index])
         numpy_image = self.get_image_numpy(self.idx_list[index])
 
-        # 生成heatmap
+        # 初始化
         heatmap = np.zeros(image.shape[1:3])
 
-        # 每行label都为一个Object3d对象，调用generate_corners3d()方法生成3D坐标
+        # 每行label都为一个Object3d对象
         corners_ego3d = np.array([i.generate_corners3d() for i in label])  # (N,8,3)
-        # 转换为图像坐标系下的2D坐标
-        boxes_image2d, corners_image2d = calib.corners3d_to_img_boxes(
-            corners_ego3d
-        )  # (N,4) (N,8,2)
-
-        boxes_image2d = xyxy2xywh(boxes_image2d).astype(
-            np.int32
-        )  # 转换为xywh格式, (N,4)
-        boxes_image2d[:, [0, 1]] = boxes_image2d[:, [1, 0]]  # 坐标顺序转换, (N,4)
-
-        boxes_image2d = clip_coordinates(
-            boxes_image2d, heatmap.shape[1], heatmap.shape[0]
-        )  # 裁剪超出边界的框
-        for x, y, w, h in boxes_image2d:
-            cv2.circle(heatmap, (y, x), 13, (255), -1)
-
-        heatmap = cv2.GaussianBlur(heatmap, (15, 15), 0)  # 高斯模糊
-        heatmap = cv2.resize(
-            heatmap, (int(1280 / 8), int(384 / 8)), interpolation=cv2.INTER_AREA
-        )  # 缩放至heatmap大小
-        heatmap = np.expand_dims(heatmap, axis=0)  # 增加维度
+        corners_cam2d = np.array([i.box2d for i in label]) # (N, 4)
         
-        heatmap_backgroud = np.ones_like(heatmap)  # heatmap背景
-        heatmap_backgroud = heatmap_backgroud - heatmap
+        for x,y,w,h in corners_cam2d:
+            cv2.circle(heatmap, (int((x+w)/2), int((y+h)/2)), 13, (255), -1)
+        
+        heatmap = cv2.GaussianBlur(heatmap, (15, 15), 0)  # 高斯模糊
+        heatmap = cv2.resize(heatmap, (160, 48), interpolation=cv2.INTER_CUBIC)  # 缩放至heatmap大小
 
-        heatmap = np.concatenate(
-            (heatmap_backgroud, heatmap), axis=0
-        )  # 合并heatmap和背景
+        _temp = np.zeros((self.max_objects, 4))
+        _temp[: len(corners_cam2d)] = corners_cam2d
+        corners_cam2d = _temp
+        # boxes_image2d = np.zeros((self.max_objects, 4))
+        # heatmap = cv2.GaussianBlur(heatmap, (15, 15), 0)  # 高斯模糊
+
+        # heatmap = np.expand_dims(heatmap, axis=0)  # 增加维度
+        # heatmap_backgroud = np.ones_like(heatmap)  # heatmap背景
+        # heatmap_backgroud = heatmap_backgroud - heatmap
+
+        # heatmap = np.concatenate(
+        #     (heatmap_backgroud, heatmap), axis=0
+        # )  # 合并heatmap和背景
 
         # numpy_image[boxes_image2d[:,0],boxes_image2d[:,1]] = (0,0,255)
 
@@ -139,6 +135,7 @@ class KITTI(data.Dataset):
         # cls_type = [i for i in cls_type if i in self.cfg["writelist"]]  # 筛选类别标签
 
         target = {
+            "box2d": corners_cam2d,
             "cls2d": 0,
             "heatmap": heatmap,
             "offset3d": 0,
@@ -150,6 +147,7 @@ class KITTI(data.Dataset):
         info = {
             "dataload_time": (time.time_ns() - dataload_time) / 1e6,  # ms
             "image_id": index,
+            "raw_image_shape": raw_image_shape,
         }
         return image, target, info
 
@@ -157,10 +155,17 @@ class KITTI(data.Dataset):
 if __name__ == "__main__":
     from torch.utils.data import DataLoader
 
-    cfg = {"split": "trainval", "writelist": ["Car", "Pedestrian", "Cyclist"]}
-    dataset = KITTI(r"C:\Users\11386\Downloads\kitti3d", cfg)
+    dataset = KITTI(
+        r"C:\Users\11386\Downloads\kitti3d",
+        "trainval",
+        {"Car": 0, "Pedestrian": 1, "Cyclist": 2},
+    )
     dataloader = DataLoader(dataset=dataset, batch_size=2, shuffle=True)
 
     for batch_idx, (inputs, targets, info) in enumerate(dataloader):
-        print(inputs.shape, targets["heatmap"].shape, info)
+        print(f"inputs: {inputs.shape}")
+        for k, v in zip(targets.keys(), targets.values()):
+            print(f"output-{k}:{targets[k].shape}")
+        print(f"info: {info}")
+        
         break
