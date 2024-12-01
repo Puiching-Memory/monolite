@@ -25,7 +25,6 @@ class visualizer(VisualizerBase):
                     std=[1 / 0.229, 1 / 0.224, 1 / 0.225],
                 ),
                 v2.ToDtype(torch.uint8, scale=True),
-                v2.Resize(size=(375, 1242)),
             ]
         )
 
@@ -35,9 +34,11 @@ class visualizer(VisualizerBase):
         # 解码image
         image = self.image_transforms(image)
         image = image[0].permute(1, 2, 0).cpu().detach().numpy()  # (375, 1242, 3)
+        raw_image_shape = data_info['raw_image_shape'][0].cpu().detach().numpy()
+        image = cv2.resize(image, (raw_image_shape[2],raw_image_shape[1]))
 
         # 解码heatmap
-        heatmap = output[6][0].sigmoid_().cpu().detach().numpy()  # (C, 48, 160)
+        heatmap = output[5][0].sigmoid_().cpu().detach().numpy()  # (48, 160)
         heatmap = heatmap * 255.0
         heatmap = heatmap.astype(np.uint8)
 
@@ -74,9 +75,11 @@ class visualizer(VisualizerBase):
         # 解码image
         image = self.image_transforms(image)
         image = image[0].permute(1, 2, 0).cpu().detach().numpy()  # (375, 1242, 3)
+        raw_image_shape = data_info['raw_image_shape'][0].cpu().detach().numpy()
+        image = cv2.resize(image, (raw_image_shape[2],raw_image_shape[1]))
 
         ## 解码heatmap
-        heatmap = output["heatmap"][0].cpu().detach().numpy()  # (C, 48, 160)
+        heatmap = output["heatmap"][0][0].cpu().detach().numpy()  # (C, 48, 160)
         heatmap = heatmap.astype(np.uint8)
 
         cv2.imwrite(os.path.join(self.save_path, "heatmap_raw.jpg"), heatmap)

@@ -249,15 +249,15 @@ if __name__ == "__main__":
 
     # 导入模型
     model: torch.nn.Module = importlib.import_module("model").model()
-    try:
-        logger.warning(f"try to compile model")
-        model = torch.compile(model)
-    except Exception as e:
-        logger.error(f"compile model error: {e}")
-
+    
     # 导入数据集
     data_set: DataSetBase = importlib.import_module("dataset").data_set()
-
+    
+    # 打印模型信息
+    print(
+        f"\n{summary(model, input_size=(data_set.get_bath_size(),3,384,1280),mode='train',verbose=0,depth=2)}"
+    )
+        
     # 导入优化器
     optimizer: OptimizerBase = importlib.import_module("optimizer").optimizer(model)
     optimizer: torch.optim.Optimizer = optimizer.get_optimizer()
@@ -268,7 +268,6 @@ if __name__ == "__main__":
 
     # 导入损失函数
     loss: LossBase = importlib.import_module("loss").loss()
-    loss = torch.compile(loss)
 
     # 导入可视化工具
     visualizer: VisualizerBase = importlib.import_module("visualizer").visualizer()
@@ -288,18 +287,24 @@ if __name__ == "__main__":
         scheduler.load_state_dict(checkpoint_dict["scheduler"])
         trainner.set_start_epoch(checkpoint_dict["epoch"])
 
+    # 尝试编译模型及函数
+    try:
+        logger.warning(f"try to compile model...")
+        model = torch.compile(model)
+        logger.warning(f"try to compile functions...")
+        loss = torch.compile(loss)
+    except Exception as e:
+        logger.error(f"compile model error: {e}")
+
     # model = model.to(device,memory_format=torch.channels_last)
     model = model.to(device)
 
-    # Enabel this line to use ema model
+    # 构建EMA模型
     # ema_model = torch.optim.swa_utils.AveragedModel(
     #     model, multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(0.999)
     # )
 
-    # 打印基本信息
-    # print(
-    #     f"\n{summary(model, input_size=(data_set.get_bath_size(),3,384,1280),mode='train',verbose=0,depth=2)}"
-    # )
+    # 打印训练配置信息
     logger.info(data_set)
     logger.info(optimizer)
     logger.info(scheduler)

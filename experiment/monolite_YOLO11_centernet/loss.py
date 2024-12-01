@@ -26,35 +26,18 @@ class loss(LossBase):
         计算损失函数
         ---
         output:dict[torch.Tensor]
-            keys:
-            - 'box2d': 预测的2D框坐标,shape为(batch_size,num_anchors,4)
-            - 'offset2d': 预测的2D框中心偏移量,shape为(batch_size,num_anchors,2)
-            - 'cls2d': 预测的2D框类别,shape为(batch_size,num_anchors,num_classes)
-
         return:torch.Tensor
             损失函数值
         """
-        # loss_box2d = -torch.log(bbox_iou(output['box2d'], target['box2d']))
-        # loss_temp = nn.BCEWithLogitsLoss()(output['neck'],torch.zeros_like(output['neck']))
-
-        # loss_heatmap = focal_loss_cornernet(
-        #     torch.clamp(output["heatmap"].sigmoid_(), min=1e-4, max=1 - 1e-4),
-        #     target["heatmap"],
-        # )
-
+        
+        #print(output[5].shape, target["heatmap"].shape)
         loss_heatmap = varifocal_loss(
-            torch.sigmoid(output[6]),
+            torch.sigmoid(output[5]),
             target["heatmap"],
         )
 
         loss = loss_heatmap
         loss_info = {"loss_heatmap": loss_heatmap}
-
-        # logger.info(output[6])
-        # logger.warning(target["heatmap"])
-        # print(output[6].shape, target["heatmap"].shape)
-        # print(output[6].dtype, target["heatmap"].dtype)
-        # logger.info(loss)
 
         return loss, loss_info
 

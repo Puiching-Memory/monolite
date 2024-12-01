@@ -17,7 +17,8 @@ class Conv(nn.Module):
         super().__init__()
         self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
         self.bn = nn.BatchNorm2d(c2)
-        self.act = nn.SiLU()
+        #self.act = nn.SiLU()
+        self.act = nn.Hardswish()
 
     def forward(self, x):
         """Apply convolution, batch normalization and activation to input tensor."""

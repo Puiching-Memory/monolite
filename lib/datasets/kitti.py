@@ -43,7 +43,7 @@ class KITTI(data.Dataset):
         self.image_transforms = v2.Compose(
             [
                 v2.ToDtype(torch.uint8, scale=True),
-                v2.Resize(size=(375, 1242)),
+                v2.Resize(size=(384, 1280)),
                 v2.ToDtype(torch.float32, scale=True),
                 v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
@@ -107,6 +107,7 @@ class KITTI(data.Dataset):
         
         heatmap = cv2.GaussianBlur(heatmap, (15, 15), 0)  # 高斯模糊
         heatmap = cv2.resize(heatmap, (160, 48), interpolation=cv2.INTER_CUBIC)  # 缩放至heatmap大小
+        heatmap = np.expand_dims(heatmap, axis=0)  # 增加维度,(1,H,W)
 
         _temp = np.zeros((self.max_objects, 4))
         _temp[: len(corners_cam2d)] = corners_cam2d
@@ -114,7 +115,6 @@ class KITTI(data.Dataset):
         # boxes_image2d = np.zeros((self.max_objects, 4))
         # heatmap = cv2.GaussianBlur(heatmap, (15, 15), 0)  # 高斯模糊
 
-        # heatmap = np.expand_dims(heatmap, axis=0)  # 增加维度
         # heatmap_backgroud = np.ones_like(heatmap)  # heatmap背景
         # heatmap_backgroud = heatmap_backgroud - heatmap
 
@@ -147,7 +147,7 @@ class KITTI(data.Dataset):
         info = {
             "dataload_time": (time.time_ns() - dataload_time) / 1e6,  # ms
             "image_id": index,
-            "raw_image_shape": raw_image_shape,
+            "raw_image_shape": raw_image_shape, # (C,H,W)
         }
         return image, target, info
 
