@@ -35,7 +35,7 @@ class model(nn.Module):
             nn.Conv2d(256, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 50, 1, 1, 0),
+            nn.Conv2d(128, 80, 1, 1, 0),
         )
         self.upsample1 = block.DySample(1024, 2, "lp", 4, False)
         self.upsample2 = block.DySample(512, 2, "lp", 4, False)

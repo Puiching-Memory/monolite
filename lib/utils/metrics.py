@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 import numpy as np
-
+from typing import Optional,Union
 
 def bbox_iou(box1, box2, xywh=True, GIoU=False, DIoU=False, CIoU=False, eps=1e-7):
     """
@@ -118,25 +118,6 @@ def xyxy2xywh(x):
     return y
 
 
-def make_anchors(feats, strides, grid_cell_offset=0.5):
-    """Generate anchors from features."""
-    anchor_points, stride_tensor = [], []
-    assert feats is not None
-    dtype, device = feats[0].dtype, feats[0].device
-    for i, stride in enumerate(strides):
-        _, _, h, w = feats[i].shape
-        sx = (
-            torch.arange(end=w, device=device, dtype=dtype) + grid_cell_offset
-        )  # shift x
-        sy = (
-            torch.arange(end=h, device=device, dtype=dtype) + grid_cell_offset
-        )  # shift y
-        sy, sx = torch.meshgrid(sy, sx)
-        anchor_points.append(torch.stack((sx, sy), -1).view(-1, 2))
-        stride_tensor.append(torch.full((h * w, 1), stride, dtype=dtype, device=device))
-    return torch.cat(anchor_points), torch.cat(stride_tensor)
-
-
 def filter_boxes(boxes, image_width, image_height):
     """
     Filter out boxes that are outside the image boundaries.
@@ -186,3 +167,18 @@ def crop_3d_points(
         & (points[:, 2] < max(z_range))
     ]
     return cropped_points
+
+
+
+def rotation_matrix_ry(theta:Union[int,float,np.ndarray])->np.ndarray:
+    # 将角度转换为弧度
+    theta_rad = np.radians(theta)
+    
+    # 创建旋转矩阵
+    rotation_matrix = np.array([
+        [np.cos(theta_rad), 0, np.sin(theta_rad)],
+        [0, 1, 0],
+        [-np.sin(theta_rad), 0, np.cos(theta_rad)]
+    ])
+    
+    return rotation_matrix

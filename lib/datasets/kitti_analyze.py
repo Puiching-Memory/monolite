@@ -9,6 +9,7 @@ from torchvision.transforms import v2
 import time
 import sys
 import cv2
+import math
 
 sys.path.append(os.path.abspath("./"))
 
@@ -95,43 +96,18 @@ class KITTI(data.Dataset):
         calib = self.get_calib(self.idx_list[index])
         numpy_image = self.get_image_numpy(self.idx_list[index])
 
-        # 初始化
-        anchor3d = np.linspace(1, 50, 50)
-        anchor3d = anchor3d[np.newaxis, np.newaxis, :]
-        anchor3d = np.repeat(anchor3d, 160, axis=0)
-        anchor3d = np.repeat(anchor3d, 48, axis=1)
+        distance = np.array(
+            [
+                math.sqrt(
+                    math.pow(i.pos[0], 2)
+                    + math.pow(i.pos[1], 2)
+                    + math.pow(i.pos[2], 2)
+                )
+                for i in label
+            ]
+        )
 
-        blk = np.zeros(numpy_image.shape, np.uint8)
-        anchor2d = []
-        for x in range(0, numpy_image.shape[1], 8):
-            for y in range(0, numpy_image.shape[0], 8):
-                for depth in range(1, 50, 1):
-                    anchor2d.append(calib.camera_dis_to_rect(x, y, depth)[0])
-        anchor2d = calib.rect_to_lidar(np.array(anchor2d))
-        anchor2d, _ = calib.lidar_to_img(anchor2d)
-        # anchor2d,_ = calib.rect_to_img(np.array(anchor2d))
-        print(anchor2d)
-
-        for x, y in anchor2d:
-            print(x, y)
-            # _temp = np.zeros(numpy_image.shape, np.uint8)
-            cv2.circle(blk, (int(x), int(y)), 1, (0, 0, 255), -1)
-            # blk = cv2.addWeighted(blk, 1.0, _temp, 0.5, 1)
-
-        cv2.addWeighted(numpy_image, 0.5, blk, 0.5, 1)
-        cv2.imwrite(f"1.jpg", blk)
-
-        # 每行label都为一个Object3d对象
-        corners_ego3d = np.array([i.generate_corners3d() for i in label])  # (N,8,3)
-        corners_cam2d = np.array([i.box2d for i in label])  # (N, 4)
-
-        _temp = np.zeros((self.max_objects, 4))
-        _temp[: len(corners_cam2d)] = corners_cam2d
-        corners_cam2d = _temp
-
-        target = {
-            "box2d": corners_cam2d,
-        }
+        target = {"distance": distance}
 
         info = {
             "dataload_time": (time.time_ns() - dataload_time) / 1e6,  # ms
@@ -143,18 +119,35 @@ class KITTI(data.Dataset):
 
 if __name__ == "__main__":
     from torch.utils.data import DataLoader
+    from matplotlib import pyplot as plt
 
     dataset = KITTI(
         r"C:\Users\11386\Downloads\kitti3d",
         "trainval",
         {"Car": 0, "Pedestrian": 1, "Cyclist": 2},
     )
-    dataloader = DataLoader(dataset=dataset, batch_size=2, shuffle=True)
+    dataloader = DataLoader(dataset=dataset, batch_size=1, shuffle=True)
 
+    _collect = []
     for batch_idx, (inputs, targets, info) in enumerate(dataloader):
         print(f"inputs: {inputs.shape}")
         for k, v in zip(targets.keys(), targets.values()):
             print(f"output-{k}:{targets[k].shape}")
         print(f"info: {info}")
+        _collect.append(targets)
+        # if batch_idx == 100:
+        #     break
 
-        break
+    # 统计距离分布
+    distance = np.array([])
+    for i in _collect:
+        distance = np.concatenate((distance, i["distance"].cpu().numpy().reshape(-1)))
+        # distance.append(i['distance'].cpu().numpy()[0])
+
+    distance = distance[distance <= 1732]  # 过滤掉异常值
+    print(np.max(distance), np.min(distance), np.mean(distance), np.median(distance))
+
+    # 统计3D框数量分布
+    
+    plt.hist(distance, bins=100)
+    plt.show()

@@ -288,13 +288,13 @@ if __name__ == "__main__":
         trainner.set_start_epoch(checkpoint_dict["epoch"])
 
     # 尝试编译模型及函数
-    try:
-        logger.warning(f"try to compile model...")
-        model = torch.compile(model)
-        logger.warning(f"try to compile functions...")
-        loss = torch.compile(loss)
-    except Exception as e:
-        logger.error(f"compile model error: {e}")
+    # try:
+    #     logger.warning(f"try to compile model...")
+    #     model = torch.compile(model)
+    #     logger.warning(f"try to compile functions...")
+    #     loss = torch.compile(loss)
+    # except Exception as e:
+    #     logger.error(f"compile model error: {e}")
 
     # model = model.to(device,memory_format=torch.channels_last)
     model = model.to(device)
