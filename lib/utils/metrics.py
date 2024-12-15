@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 import numpy as np
-from typing import Optional,Union
+from typing import Optional, Union
+
 
 def bbox_iou(box1, box2, xywh=True, GIoU=False, DIoU=False, CIoU=False, eps=1e-7):
     """
@@ -121,30 +122,35 @@ def xyxy2xywh(x):
 def filter_boxes(boxes, image_width, image_height):
     """
     Filter out boxes that are outside the image boundaries.
-    
+
     Parameters:
     - boxes (Tensor): Tensor of shape (n, 4) where each row is [x_min, y_min, x_max, y_max].
     - image_width (int): The width of the image.
     - image_height (int): The height of the image.
-    
+
     Returns:
     - Tensor: Filtered boxes that are within the image boundaries.
     """
     # 确保boxes是PyTorch张量
     boxes = torch.as_tensor(boxes, dtype=torch.float32)
-    
+
     # 检查边界框的坐标是否在图像范围内
     # x_min 和 y_min 应该大于等于0，x_max 和 y_max 应该小于等于图像的宽高
-    condition = (boxes[:, 0] >= 0) & (boxes[:, 1] >= 0) & \
-                (boxes[:, 2] <= image_width) & (boxes[:, 3] <= image_height)
-    
+    condition = (
+        (boxes[:, 0] >= 0)
+        & (boxes[:, 1] >= 0)
+        & (boxes[:, 2] <= image_width)
+        & (boxes[:, 3] <= image_height)
+    )
+
     # 同时x_max 应该大于 x_min, y_max 应该大于 y_min
     condition = condition & (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
-    
+
     # 根据条件筛选出合法的边界框
     valid_boxes = boxes[condition]
-    
+
     return valid_boxes
+
 
 def crop_3d_points(
     points: np.ndarray,
@@ -169,16 +175,39 @@ def crop_3d_points(
     return cropped_points
 
 
+def inside_test(points, cube3d):
+    """
+    cube3d  =  numpy array of the shape (8,3) with coordinates in the clockwise order. first the bottom plane is considered then the top one.
+    points = array of points with shape (N, 3).
 
-def rotation_matrix_ry(theta:Union[int,float,np.ndarray])->np.ndarray:
-    # 将角度转换为弧度
-    theta_rad = np.radians(theta)
-    
-    # 创建旋转矩阵
-    rotation_matrix = np.array([
-        [np.cos(theta_rad), 0, np.sin(theta_rad)],
-        [0, 1, 0],
-        [-np.sin(theta_rad), 0, np.cos(theta_rad)]
-    ])
-    
-    return rotation_matrix
+    Returns the indices of the points array which are outside the cube3d
+    """
+    b1, b2, b3, b4, t1, t2, t3, t4 = cube3d
+
+    # 计算三个单位法向量dir1、dir2、dir3
+    dir1 = t1 - b1
+    size1 = np.linalg.norm(dir1)
+    dir1 = dir1 / size1
+
+    dir2 = b2 - b1
+    size2 = np.linalg.norm(dir2)
+    dir2 = dir2 / size2
+
+    dir3 = b4 - b1
+    size3 = np.linalg.norm(dir3)
+    dir3 = dir3 / size3
+
+    # 计算中心点cube3d_center
+    cube3d_center = (b1 + t3) / 2.0
+
+    # 点到中心点cube3d_center的向量
+    dir_vec = points - cube3d_center
+
+    # dir_vec到3个单位法向量的投影距离，再乘2
+    # 小于box三条边的长度，则符合要求
+    res1 = np.where((np.absolute(dir_vec @ dir1) * 2) <= size1)[0]
+    res2 = np.where((np.absolute(dir_vec @ dir2) * 2) <= size2)[0]
+    res3 = np.where((np.absolute(dir_vec @ dir3) * 2) <= size3)[0]
+
+    # 符合的结果取交集
+    return np.array(list(set(res1) & set(res2) & set(res3)))

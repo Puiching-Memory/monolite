@@ -576,6 +576,17 @@ def roty(t):
     s = np.sin(t)
     return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
 
+def rotx(t):
+    """Rotation about the x-axis."""
+    c = np.cos(t)
+    s = np.sin(t)
+    return np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
+
+def rotz(t):
+    """Rotation about the z-axis."""
+    c = np.cos(t)
+    s = np.sin(t)
+    return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
 
 if __name__ == "__main__":
     from lib.datasets.kitti import KITTI
