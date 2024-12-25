@@ -1,6 +1,8 @@
 import numpy as np
+import numba
+from numba.experimental import jitclass
 import cv2
-from typing import Union, Optional
+from typing import Union, Optional, Dict
 
 METAINFO = {
     "classes": (
@@ -165,26 +167,6 @@ class Object3d(object):
 ###################  calibration  ###################
 
 
-def get_calib_from_file(calib_file):
-    with open(calib_file) as f:
-        lines = f.readlines()
-
-    # 使用列表推导式读取数据
-    matrices = [
-        np.array(lines[i].strip().split(" ")[1:], dtype=np.float32) for i in range(7)
-    ]
-
-    return {
-        "P0": matrices[0].reshape(3, 4),
-        "P1": matrices[1].reshape(3, 4),
-        "P2": matrices[2].reshape(3, 4),
-        "P3": matrices[3].reshape(3, 4),
-        "R0": matrices[4].reshape(3, 3),
-        "Tr_velo_to_cam": matrices[5].reshape(3, 4),
-        "Tr_imu_to_velo": matrices[6].reshape(3, 4),
-    }
-
-
 class Calibration(object):
     """kitti calibration class
 
@@ -222,7 +204,7 @@ class Calibration(object):
     def __init__(self, calib: Union[str, dict]):
 
         if isinstance(calib, str):
-            calib = get_calib_from_file(calib)
+            calib = self.get_calib_from_file(calib)
 
         self.P0 = calib["P0"]  # 3 x 4
         self.P1 = calib["P1"]  # 3 x 4
@@ -239,6 +221,26 @@ class Calibration(object):
         self.fv = self.P2[1, 1]
         self.tx = self.P2[0, 3] / (-self.fu)
         self.ty = self.P2[1, 3] / (-self.fv)
+
+    def get_calib_from_file(self, calib_file: str) -> Dict[str, np.ndarray]:
+        with open(calib_file) as f:
+            lines = f.readlines()
+
+        # 使用列表推导式读取数据
+        matrices = [
+            np.array(lines[i].strip().split(" ")[1:], dtype=np.float32)
+            for i in range(7)
+        ]
+
+        return {
+            "P0": matrices[0].reshape(3, 4),
+            "P1": matrices[1].reshape(3, 4),
+            "P2": matrices[2].reshape(3, 4),
+            "P3": matrices[3].reshape(3, 4),
+            "R0": matrices[4].reshape(3, 3),
+            "Tr_velo_to_cam": matrices[5].reshape(3, 4),
+            "Tr_imu_to_velo": matrices[6].reshape(3, 4),
+        }
 
     def cart_to_hom(self, pts: np.ndarray) -> np.ndarray:
         """
@@ -357,10 +359,8 @@ class Calibration(object):
         x = ((u - self.cu) * d) / fd + self.tx
         y = ((v - self.cv) * d) / fd + self.ty
         z = np.sqrt(d**2 - x**2 - y**2)
-        pts_rect = np.concatenate(
-            (x.reshape(-1, 1), y.reshape(-1, 1), z.reshape(-1, 1)), axis=1
-        )
-        return pts_rect
+
+        return np.column_stack((x, y, z))
 
     def inverse_rigid_trans(self, Tr):
         """Inverse a rigid body transform matrix (3x4 as [R|t])
@@ -576,17 +576,20 @@ def roty(t):
     s = np.sin(t)
     return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
 
+
 def rotx(t):
     """Rotation about the x-axis."""
     c = np.cos(t)
     s = np.sin(t)
     return np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
 
+
 def rotz(t):
     """Rotation about the z-axis."""
     c = np.cos(t)
     s = np.sin(t)
     return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+
 
 if __name__ == "__main__":
     from lib.datasets.kitti import KITTI

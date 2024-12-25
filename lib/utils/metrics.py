@@ -185,20 +185,20 @@ def inside_test(points, cube3d):
     b1, b2, b3, b4, t1, t2, t3, t4 = cube3d
 
     # 计算三个单位法向量dir1、dir2、dir3
-    dir1 = t1 - b1
+    dir1 = (t1-b1)
     size1 = np.linalg.norm(dir1)
     dir1 = dir1 / size1
 
-    dir2 = b2 - b1
+    dir2 = (b2-b1)
     size2 = np.linalg.norm(dir2)
     dir2 = dir2 / size2
 
-    dir3 = b4 - b1
+    dir3 = (b4-b1)
     size3 = np.linalg.norm(dir3)
     dir3 = dir3 / size3
 
     # 计算中心点cube3d_center
-    cube3d_center = (b1 + t3) / 2.0
+    cube3d_center = (b1 + t3)/2.0
 
     # 点到中心点cube3d_center的向量
     dir_vec = points - cube3d_center
@@ -210,4 +210,4 @@ def inside_test(points, cube3d):
     res3 = np.where((np.absolute(dir_vec @ dir3) * 2) <= size3)[0]
 
     # 符合的结果取交集
-    return np.array(list(set(res1) & set(res2) & set(res3)))
+    return np.intersect1d(np.intersect1d(res1, res2),res3)

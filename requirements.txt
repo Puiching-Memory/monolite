@@ -1,4 +1,6 @@
 # NOTE: install torch with CUDA >= 12.4 first!
+# torch==2.5.1
+torchdata==0.10.1
 
 # main dependencies (must be installed)
 torchinfo==1.8.0
@@ -7,14 +9,16 @@ pillow==10.4.0
 psutil==6.1.1
 matplotlib==3.10.0
 pyecharts==2.0.7
-open3d==0.18.0 # https://www.open3d.org/docs/latest/getting_started.html
+open3d==0.18.0 # https://www.open3d.org/docs/latest/getting_started.html --> numpy==1.26.3
+#numpy==1.26.3
+numba==0.60.0
 #grad-cam==1.5.4
 albumentations==1.4.23
 
 # log tools (must be installed)
 loguru==0.7.3
 rich==13.9.4
-swanlab==0.4.1
+swanlab==0.4.2
 #tqdm==4.67.1
 
 # export tools (optional)

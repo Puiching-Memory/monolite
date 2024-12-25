@@ -87,7 +87,7 @@ class KITTI(data.Dataset):
         return len(self.idx_list)
 
     def __getitem__(self, index):
-        dataload_time = time.time_ns()
+        dataload_time = time.perf_counter_ns()
 
         # 获取图像、标签、标定信息
         image, raw_image_shape = self.get_image(self.idx_list[index])
@@ -95,46 +95,19 @@ class KITTI(data.Dataset):
         calib = self.get_calib(self.idx_list[index])
         numpy_image = self.get_image_numpy(self.idx_list[index])
 
-        # 初始化
-        anchor3d = np.linspace(1, 50, 50)
-        anchor3d = anchor3d[np.newaxis, np.newaxis, :]
-        anchor3d = np.repeat(anchor3d, 160, axis=0)
-        anchor3d = np.repeat(anchor3d, 48, axis=1)
-
-        blk = np.zeros(numpy_image.shape, np.uint8)
-        anchor2d = []
-        for x in range(0, numpy_image.shape[1], 8):
-            for y in range(0, numpy_image.shape[0], 8):
-                for depth in range(1, 50, 1):
-                    anchor2d.append(calib.camera_dis_to_rect(x, y, depth)[0])
-        anchor2d = calib.rect_to_lidar(np.array(anchor2d))
-        anchor2d, _ = calib.lidar_to_img(anchor2d)
-        # anchor2d,_ = calib.rect_to_img(np.array(anchor2d))
-        print(anchor2d)
-
-        for x, y in anchor2d:
-            print(x, y)
-            # _temp = np.zeros(numpy_image.shape, np.uint8)
-            cv2.circle(blk, (int(x), int(y)), 1, (0, 0, 255), -1)
-            # blk = cv2.addWeighted(blk, 1.0, _temp, 0.5, 1)
-
-        cv2.addWeighted(numpy_image, 0.5, blk, 0.5, 1)
-        cv2.imwrite(f"1.jpg", blk)
-
-        # 每行label都为一个Object3d对象
-        corners_ego3d = np.array([i.generate_corners3d() for i in label])  # (N,8,3)
-        corners_cam2d = np.array([i.box2d for i in label])  # (N, 4)
-
-        _temp = np.zeros((self.max_objects, 4))
-        _temp[: len(corners_cam2d)] = corners_cam2d
-        corners_cam2d = _temp
-
+        # 初始化3D锚点
+        heatmap3D = [calib.camera_dis_to_rect(x,y,depth)
+                    for x in range(0, numpy_image.shape[1], 8)
+                    for y in range(0, numpy_image.shape[0], 8)
+                    for depth in range(1, 80)]
+        heatmap3D = np.array(heatmap3D).reshape((-1, 3))
+        
         target = {
-            "box2d": corners_cam2d,
+            "heatmap3D": heatmap3D,
         }
 
         info = {
-            "dataload_time": (time.time_ns() - dataload_time) / 1e6,  # ms
+            "dataload_time": (time.perf_counter_ns() - dataload_time) / 1e6,  # ms
             "image_id": index,
             "raw_image_shape": raw_image_shape,  # (C,H,W)
         }

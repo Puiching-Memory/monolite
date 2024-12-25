@@ -82,7 +82,7 @@ def train(
             total=trainner.get_end_epoch(),
         )
         for epoch_now in range(trainner.get_start_epoch(), trainner.get_end_epoch()):
-            epoch_start_time = time.time()
+            epoch_start_time = time.perf_counter_ns()
             model.train()
             for i, (inputs, targets, data_info) in enumerate(train_loader):
                 optimizer.zero_grad()
@@ -93,13 +93,13 @@ def train(
                     device_type="cuda" if torch.cuda.is_available() else "cpu",
                     enabled=trainner.is_amp(),
                 ):
-                    forward_time = time.time_ns()
+                    forward_time = time.perf_counter_ns()
                     outputs = model(inputs)
-                    forward_time = (time.time_ns() - forward_time) / 1e6  # ms
+                    forward_time = (time.perf_counter_ns() - forward_time) / 1e6  # ms
 
-                    loss_time = time.time_ns()
+                    loss_time = time.perf_counter_ns()
                     loss, loss_info = loss_fn(outputs, targets)
-                    loss_time = (time.time_ns() - loss_time) / 1e6  # ms
+                    loss_time = (time.perf_counter_ns() - loss_time) / 1e6  # ms
 
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
@@ -200,7 +200,7 @@ def train(
             )
 
             logger.info(
-                f"epoch {epoch_now+1} finished, time: {time.time()-epoch_start_time:.2f}s"
+                f"epoch {epoch_now+1} finished, time: {time.perf_counter_ns()-epoch_start_time:.2f}s"
             )
 
     if ema_model is not None:
