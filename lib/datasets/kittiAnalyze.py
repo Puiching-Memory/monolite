@@ -13,8 +13,8 @@ import math
 
 sys.path.append(os.path.abspath("./"))
 
-from lib.datasets.kitti_utils import get_objects_from_label
-from lib.datasets.kitti_utils import Calibration, Object3d
+from lib.datasets.kittiUtils import get_objects_from_label
+from lib.datasets.kittiUtils import Calibration, Object3d
 from lib.utils.metrics import xyxy2xywh, filter_boxes
 
 

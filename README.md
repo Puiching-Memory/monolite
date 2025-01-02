@@ -52,6 +52,10 @@ Note that we are an engineering project, the code will be updated synchronously,
 
 ```
 conda create -n monolite python=3.12
+conda activate monolite
+pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
+pip install https://github.com/isl-org/Open3D/releases/download/main-devel/open3d-0.18.0+34d8039-cp312-cp312-win_amd64.whl
+pip install -r requirements.txt
 ```
 
 ### 前置组件
@@ -63,14 +67,7 @@ conda create -n monolite python=3.12
 | windows | MSbuild            | 通过VS2022下载                                                                                      |                                                |
 | windows | MSVC               | 通过VS2022下载                                                                                      | 已测试19.42.34433<br />*手动添加至环境变量PATH |
 
-### pip
-
-```
-pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
-pip install -r requirements.txt
-```
-
-### ~~Docker~~（暂不可用）
+~~Docker~~（暂不可用）
 
 ```console
 set DOCKER_BUILDKIT=0

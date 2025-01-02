@@ -12,8 +12,8 @@ import cv2
 
 sys.path.append(os.path.abspath("./"))
 
-from lib.datasets.kitti_utils import get_objects_from_label
-from lib.datasets.kitti_utils import Calibration, Object3d
+from lib.datasets.kittiUtils import get_objects_from_label,get_calib_from_file
+from lib.datasets.kittiUtils import Calibration, Object3d
 from lib.utils.metrics import xyxy2xywh, filter_boxes
 
 
@@ -48,6 +48,17 @@ class KITTI(data.Dataset):
                 v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
+        
+        # 生成3D锚点
+        _calib = self.get_calib(self.idx_list[0])
+        _numpy_image = self.get_image_numpy(self.idx_list[0])
+        self.anchor3D = [
+            _calib.camera_dis_to_rect(x, y, depth)
+            for x in range(0, _numpy_image.shape[1], 8)
+            for y in range(0, _numpy_image.shape[0], 8)
+            for depth in range(1, 80)
+        ]
+        self.anchor3D = np.array(self.anchor3D).reshape((-1, 3))
 
     def get_image(self, idx) -> torch.Tensor:
         img_file = os.path.join(self.image_dir, f"{idx}.png")
@@ -62,7 +73,9 @@ class KITTI(data.Dataset):
         img_file = os.path.join(self.image_dir, f"{idx}.png")
         assert os.path.exists(img_file)
         image = cv2.imread(img_file)  # (H,W,C)
-        return image
+        raw_image_shape = np.array(image.shape)
+        image = cv2.resize(image, (1280, 384))  # (H,W,C)
+        return image, raw_image_shape
 
     def get_label(self, idx) -> list[Object3d]:
         label_file = os.path.join(self.label_dir, f"{idx}.txt")
@@ -83,6 +96,28 @@ class KITTI(data.Dataset):
         with open(f"{self.data_dir}/cache/{index}.pkl", "wb") as file:
             pickle.dump(data, file, pickle.HIGHEST_PROTOCOL)
 
+    def build_parquet(self, index) -> str:
+        import pyarrow.parquet as parquet
+        import pyarrow.feather as feather
+        import pyarrow as pa
+        import os
+
+        tables = []
+        for i in []:
+            table = pa.Table.from_arrays(
+                [
+                    matrix.flatten(),
+                ],
+                names=["data1"],
+            )
+
+            tables.append(table)
+
+        # feather.write_feather(pa.concat_tables(tables), "output.feather")
+        parquet.write_table(pa.concat_tables(tables), "output.parquet")
+
+        return "output.parquet"
+    
     def __len__(self):
         return len(self.idx_list)
 
@@ -95,13 +130,7 @@ class KITTI(data.Dataset):
         calib = self.get_calib(self.idx_list[index])
         numpy_image = self.get_image_numpy(self.idx_list[index])
 
-        # 初始化3D锚点
-        heatmap3D = [calib.camera_dis_to_rect(x,y,depth)
-                    for x in range(0, numpy_image.shape[1], 8)
-                    for y in range(0, numpy_image.shape[0], 8)
-                    for depth in range(1, 80)]
-        heatmap3D = np.array(heatmap3D).reshape((-1, 3))
-        
+
         target = {
             "heatmap3D": heatmap3D,
         }

@@ -2,6 +2,7 @@ __pycache__
 temp.png
 temp.jpg
 .coverage
+.pytest_cache/
 logs/
 swanlog/
 output/

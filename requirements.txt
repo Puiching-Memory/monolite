@@ -8,18 +8,22 @@ opencv-python==4.10.0.84
 pillow==10.4.0
 psutil==6.1.1
 matplotlib==3.10.0
-pyecharts==2.0.7
 open3d==0.18.0 # https://www.open3d.org/docs/latest/getting_started.html --> numpy==1.26.3
-#numpy==1.26.3
+# numpy==1.26.3
+cupy==13.3.0
 numba==0.60.0
-#grad-cam==1.5.4
-albumentations==1.4.23
+# grad-cam==1.5.4
+albumentations==1.4.24
 
 # log tools (must be installed)
 loguru==0.7.3
 rich==13.9.4
 swanlab==0.4.2
-#tqdm==4.67.1
+# tqdm==4.67.1
+
+# visualization tools (optional)
+pyecharts==2.0.7
+xlwings==0.33.5
 
 # export tools (optional)
 onnx==1.17.0
@@ -27,10 +31,10 @@ onnxruntime-gpu==1.20.1
 onnxscript==0.1.0.dev20241102
 onnxsim==0.4.36
 torch-tensorrt==2.5.0 # https://pytorch.org/TensorRT/getting_started/installation.html#installation
-tensorrt==10.3.0
+# tensorrt==10.3.0 # Can not install by deafulf, Use: >>> pip install --extra-index-url https://pypi.nvidia.com tensorrt-cu12-libs==10.3.0
 # pip install "nvidia-modelopt[all]~=0.19.0" --extra-index-url https://pypi.nvidia.com # https://nvidia.github.io/TensorRT-Model-Optimizer/getting_started/2_installation.html
-pnnx==20240819
-ncnn==1.0.20240820
+pnnx==20241223
+ncnn==1.0.20241226
 monkeytype==23.3.0
 
 # datasets tools (optional)
@@ -54,6 +58,7 @@ mkdocs-static-i18n==1.2.3
 # test tools (optional)
 pytest==8.3.4
 pytest-cov==6.0.0
+pyinstrument==5.0.0
 
 # performance anylysis tools (optional)
 # scalene==1.5.49 # Not a eazy way to use

@@ -30,11 +30,10 @@ METAINFO = {
 ################  Object3D  ##################
 
 
-def get_objects_from_label(label_file):
-    with open(label_file, "r") as f:
+def get_objects_from_label(label_path: str) -> list:
+    with open(label_path, "r") as f:
         lines = f.readlines()
-    objects = [Object3d(line) for line in lines]
-    return objects
+    return [Object3d(line) for line in lines]
 
 
 class Object3d(object):
@@ -165,6 +164,24 @@ class Object3d(object):
 
 
 ###################  calibration  ###################
+def get_calib_from_file(calib_file: str) -> Dict[str, np.ndarray]:
+    with open(calib_file) as f:
+        lines = f.readlines()
+
+    # 使用列表推导式读取数据
+    matrices = [
+        np.array(lines[i].strip().split(" ")[1:], dtype=np.float32) for i in range(7)
+    ]
+
+    return {
+        "P0": matrices[0].reshape(3, 4),
+        "P1": matrices[1].reshape(3, 4),
+        "P2": matrices[2].reshape(3, 4),
+        "P3": matrices[3].reshape(3, 4),
+        "R0": matrices[4].reshape(3, 3),
+        "Tr_velo_to_cam": matrices[5].reshape(3, 4),
+        "Tr_imu_to_velo": matrices[6].reshape(3, 4),
+    }
 
 
 class Calibration(object):
@@ -201,17 +218,15 @@ class Calibration(object):
     Ref (KITTI paper): http://www.cvlibs.net/publications/Geiger2013IJRR.pdf
     """
 
-    def __init__(self, calib: Union[str, dict]):
-
+    def __init__(self, calib: Union[str, dict]) -> None:
         if isinstance(calib, str):
-            calib = self.get_calib_from_file(calib)
-
+            calib = get_calib_from_file(calib)
         self.P0 = calib["P0"]  # 3 x 4
         self.P1 = calib["P1"]  # 3 x 4
         self.P2 = calib["P2"]  # 3 x 4
         self.R0 = calib["R0"]  # 3 x 3
         self.V2C = calib["Tr_velo_to_cam"]  # 3 x 4
-        self.C2V = self.inverse_rigid_trans(self.V2C)
+        self.C2V = inverse_rigid_trans(self.V2C)
         self.Tr_imu_to_velo = calib["Tr_imu_to_velo"]  # 3 x 4
 
         # Camera intrinsics and extrinsics
@@ -222,34 +237,6 @@ class Calibration(object):
         self.tx = self.P2[0, 3] / (-self.fu)
         self.ty = self.P2[1, 3] / (-self.fv)
 
-    def get_calib_from_file(self, calib_file: str) -> Dict[str, np.ndarray]:
-        with open(calib_file) as f:
-            lines = f.readlines()
-
-        # 使用列表推导式读取数据
-        matrices = [
-            np.array(lines[i].strip().split(" ")[1:], dtype=np.float32)
-            for i in range(7)
-        ]
-
-        return {
-            "P0": matrices[0].reshape(3, 4),
-            "P1": matrices[1].reshape(3, 4),
-            "P2": matrices[2].reshape(3, 4),
-            "P3": matrices[3].reshape(3, 4),
-            "R0": matrices[4].reshape(3, 3),
-            "Tr_velo_to_cam": matrices[5].reshape(3, 4),
-            "Tr_imu_to_velo": matrices[6].reshape(3, 4),
-        }
-
-    def cart_to_hom(self, pts: np.ndarray) -> np.ndarray:
-        """
-        :param pts: (N, 3 or 2)
-        :return pts_hom: (N, 4 or 3)
-        """
-        pts_hom = np.hstack((pts, np.ones((pts.shape[0], 1), dtype=np.float32)))
-        return pts_hom
-
     def lidar_to_rect(self, pts_lidar):
         """
         :param pts_lidar: (N, 3)
@@ -257,7 +244,6 @@ class Calibration(object):
         """
         pts_lidar_hom = self.cart_to_hom(pts_lidar)
         pts_rect = np.dot(pts_lidar_hom, np.dot(self.V2C.T, self.R0.T))
-        # pts_rect = reduce(np.dot, (pts_lidar_hom, self.V2C.T, self.R0.T))
         return pts_rect
 
     def rect_to_lidar(self, pts_rect):
@@ -362,15 +348,6 @@ class Calibration(object):
 
         return np.column_stack((x, y, z))
 
-    def inverse_rigid_trans(self, Tr):
-        """Inverse a rigid body transform matrix (3x4 as [R|t])
-        [R'|-R't; 0|1]
-        """
-        inv_Tr = np.zeros_like(Tr)  # 3x4
-        inv_Tr[0:3, 0:3] = np.transpose(Tr[0:3, 0:3])
-        inv_Tr[0:3, 3] = np.dot(-np.transpose(Tr[0:3, 0:3]), Tr[0:3, 3])
-        return inv_Tr
-
     def alpha2ry(self, alpha, u):
         """
         Get rotation_y by alpha + theta - 180
@@ -397,177 +374,24 @@ class Calibration(object):
 
         return alpha
 
-    def flip(self, img_size):
-        wsize = 4
-        hsize = 2
-        p2ds = (
-            np.concatenate(
-                [
-                    np.expand_dims(
-                        np.tile(
-                            np.expand_dims(np.linspace(0, img_size[0], wsize), 0),
-                            [hsize, 1],
-                        ),
-                        -1,
-                    ),
-                    np.expand_dims(
-                        np.tile(
-                            np.expand_dims(np.linspace(0, img_size[1], hsize), 1),
-                            [1, wsize],
-                        ),
-                        -1,
-                    ),
-                    np.linspace(2, 78, wsize * hsize).reshape(hsize, wsize, 1),
-                ],
-                -1,
-            )
-        ).reshape(-1, 3)
-        p3ds = self.img_to_rect(p2ds[:, 0:1], p2ds[:, 1:2], p2ds[:, 2:3])
-        p3ds[:, 0] *= -1
-        p2ds[:, 0] = img_size[0] - p2ds[:, 0]
 
-        # self.P2[0,3] *= -1
-        cos_matrix = np.zeros([wsize * hsize, 2, 7])
-        cos_matrix[:, 0, 0] = p3ds[:, 0]
-        cos_matrix[:, 0, 1] = cos_matrix[:, 1, 2] = p3ds[:, 2]
-        cos_matrix[:, 1, 0] = p3ds[:, 1]
-        cos_matrix[:, 0, 3] = cos_matrix[:, 1, 4] = 1
-        cos_matrix[:, :, -2] = -p2ds[:, :2]
-        cos_matrix[:, :, -1] = -p2ds[:, :2] * p3ds[:, 2:3]
-        new_calib = np.linalg.svd(cos_matrix.reshape(-1, 7))[-1][-1]
-        new_calib /= new_calib[-1]
-
-        new_calib_matrix = np.zeros([4, 3]).astype(np.float32)
-        new_calib_matrix[0, 0] = new_calib_matrix[1, 1] = new_calib[0]
-        new_calib_matrix[2, 0:2] = new_calib[1:3]
-        new_calib_matrix[3, :] = new_calib[3:6]
-        new_calib_matrix[-1, -1] = self.P2[-1, -1]
-        self.P2 = new_calib_matrix.T
-        self.cu = self.P2[0, 2]
-        self.cv = self.P2[1, 2]
-        self.fu = self.P2[0, 0]
-        self.fv = self.P2[1, 1]
-        self.tx = self.P2[0, 3] / (-self.fu)
-        self.ty = self.P2[1, 3] / (-self.fv)
-
-    def affine_transform(self, img_size, trans):
-        wsize = 4
-        hsize = 2
-        random_depth = np.linspace(2, 78, wsize * hsize).reshape(hsize, wsize, 1)
-        p2ds = (
-            np.concatenate(
-                [
-                    np.expand_dims(
-                        np.tile(
-                            np.expand_dims(np.linspace(0, img_size[0], wsize), 0),
-                            [hsize, 1],
-                        ),
-                        -1,
-                    ),
-                    np.expand_dims(
-                        np.tile(
-                            np.expand_dims(np.linspace(0, img_size[1], hsize), 1),
-                            [1, wsize],
-                        ),
-                        -1,
-                    ),
-                    random_depth,
-                ],
-                -1,
-            )
-        ).reshape(-1, 3)
-        p3ds = self.img_to_rect(p2ds[:, 0:1], p2ds[:, 1:2], p2ds[:, 2:3])
-        p2ds[:, :2] = np.dot(
-            np.concatenate([p2ds[:, :2], np.ones([wsize * hsize, 1])], -1), trans.T
-        )
-
-        cos_matrix = np.zeros([wsize * hsize, 2, 7])
-        cos_matrix[:, 0, 0] = p3ds[:, 0]
-        cos_matrix[:, 0, 1] = cos_matrix[:, 1, 2] = p3ds[:, 2]
-        cos_matrix[:, 1, 0] = p3ds[:, 1]
-        cos_matrix[:, 0, 3] = cos_matrix[:, 1, 4] = 1
-        cos_matrix[:, :, -2] = -p2ds[:, :2]
-        cos_matrix[:, :, -1] = -p2ds[:, :2] * p3ds[:, 2:3]
-        new_calib = np.linalg.svd(cos_matrix.reshape(-1, 7))[-1][-1]
-        new_calib /= new_calib[-1]
-
-        new_calib_matrix = np.zeros([4, 3]).astype(np.float32)
-        new_calib_matrix[0, 0] = new_calib_matrix[1, 1] = new_calib[0]
-        new_calib_matrix[2, 0:2] = new_calib[1:3]
-        new_calib_matrix[3, :] = new_calib[3:6]
-        new_calib_matrix[-1, -1] = self.P2[-1, -1]
-        return new_calib_matrix.T
-        # return new_calib_matrix.T
-        # print('{}-->{}'.format(ori_size,tar_size))
-        # print(new_calib_matrix.T)
-        # print(np.abs(p3ds[:,:2] - self.img_to_rect(p2ds[:,0:1],p2ds[:,1:2],p2ds[:,2:3])[:,:2]).max())
-        # assert(np.abs(p3ds[:,:2] - self.img_to_rect(p2ds[:,0:1],p2ds[:,1:2],p2ds[:,2:3])[:,:2]).max()<1e-10)
+def cart_to_hom(pts: np.ndarray) -> np.ndarray:
+    """
+    将笛卡尔坐标转换为齐次坐标
+    :param pts: 形状为 (N, 3 或 2) 的 numpy 数组，表示 N 个点的笛卡尔坐标
+    :return pts_hom: 形状为 (N, 4 或 3) 的 numpy 数组，表示 N 个点的齐次坐标
+    """
+    return np.hstack((pts, np.ones((pts.shape[0], 1), dtype=np.float32)))
 
 
-###################  affine trainsform  ###################
-
-
-def get_dir(src_point, rot_rad):
-    sn, cs = np.sin(rot_rad), np.cos(rot_rad)
-
-    src_result = [0, 0]
-    src_result[0] = src_point[0] * cs - src_point[1] * sn
-    src_result[1] = src_point[0] * sn + src_point[1] * cs
-
-    return src_result
-
-
-def get_3rd_point(a, b):
-    direct = a - b
-    return b + np.array([-direct[1], direct[0]], dtype=np.float32)
-
-
-def get_affine_transform(
-    center, scale, rot, output_size, shift=np.array([0, 0], dtype=np.float32), inv=0
-):
-    if not isinstance(scale, np.ndarray) and not isinstance(scale, list):
-        scale = np.array([scale, scale], dtype=np.float32)
-
-    scale_tmp = scale
-    src_w = scale_tmp[0]
-    dst_w = output_size[0]
-    dst_h = output_size[1]
-
-    rot_rad = np.pi * rot / 180
-    src_dir = get_dir([0, src_w * -0.5], rot_rad)
-    dst_dir = np.array([0, dst_w * -0.5], np.float32)
-
-    # scale all area
-    # src_dir = get_dir([0, scale_tmp[1] * -0.5], rot_rad)
-    # dst_dir = np.array([0, dst_h * -0.5], np.float32)
-
-    src = np.zeros((3, 2), dtype=np.float32)
-    dst = np.zeros((3, 2), dtype=np.float32)
-    src[0, :] = center + scale_tmp * shift
-    src[1, :] = center + src_dir + scale_tmp * shift
-    dst[0, :] = [dst_w * 0.5, dst_h * 0.5]
-    dst[1, :] = np.array([dst_w * 0.5, dst_h * 0.5], np.float32) + dst_dir
-
-    src[2:, :] = get_3rd_point(src[0, :], src[1, :])
-    dst[2:, :] = get_3rd_point(dst[0, :], dst[1, :])
-
-    # scale all area
-    # src[2, :] = np.array([center[0] - 0.5 * scale_tmp[0], center[1] - 0.5 * scale_tmp[1]])
-    # dst[2, :] = np.array([0, 0])
-
-    if inv:
-        trans = cv2.getAffineTransform(np.float32(src), np.float32(dst))
-        trans_inv = cv2.getAffineTransform(np.float32(dst), np.float32(src))
-        return trans, trans_inv
-    else:
-        trans = cv2.getAffineTransform(np.float32(src), np.float32(dst))
-    return trans
-
-
-def affine_transform(pt, t):
-    new_pt = np.array([pt[0], pt[1], 1.0], dtype=np.float32).T
-    new_pt = np.dot(t, new_pt)
-    return new_pt[:2]
+def inverse_rigid_trans(Tr: np.ndarray) -> np.ndarray:
+    """逆刚体变换矩阵(3x4 形式为 [R|t])
+    [R'|-R't; 0|1]
+    """
+    inv_Tr = np.zeros_like(Tr)  # 3x4
+    inv_Tr[0:3, 0:3] = np.transpose(Tr[0:3, 0:3])
+    inv_Tr[0:3, 3] = np.dot(-np.transpose(Tr[0:3, 0:3]), Tr[0:3, 3])
+    return inv_Tr
 
 
 def roty(t):
@@ -592,31 +416,18 @@ def rotz(t):
 
 
 if __name__ == "__main__":
-    from lib.datasets.kitti import KITTI
+    from pyinstrument import Profiler
 
-    cfg = {"random_flip": 0.0, "random_crop": 0.0, "scale": 0.4, "shift": 0.1}
-    dataset = KITTI("../../data", "train", cfg)
+    profiler = Profiler()
+    profiler.start()
 
-    # calib testing
-    # we project center fo 3D objects to image plane
-    index = 1
-    calib = dataset.get_calib(index)
-    objects = dataset.get_label(index)
-    for object in objects:
-        print(object.to_kitti_format())
-        object.pos[0] *= 1
-        center_3d = object.pos + [0, -object.h / 2, 0]  # real 3D center
-        center_3d = center_3d.reshape(-1, 3)  # (N, 3)
-        center_3d_projected, depth = calib.rect_to_img(center_3d)
-        box2d = object.box2d
-        center_2d = [(box2d[0] + box2d[2]) / 2, (box2d[1] + box2d[3]) / 2]
-        print(
-            "3D center/2D center/projected 3D center:",
-            center_3d,
-            center_2d,
-            center_3d_projected,
-        )
-        print(
-            "alpha ---> ry ", object.alpha, calib.alpha2ry(object.alpha, center_2d[0])
-        )
-        break
+    print(cv2.cuda.getCudaEnabledDeviceCount())
+
+    for i in range(1000):
+        result = cart_to_hom(np.random.rand(1000, 3))
+
+    profiler.stop()
+    profiler.print()
+
+    with open("profiler.html", "w") as f:
+        f.write(profiler.output_html())
