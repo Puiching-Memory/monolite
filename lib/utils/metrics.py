@@ -175,39 +175,20 @@ def crop_3d_points(
     return cropped_points
 
 
-def inside_test(points, cube3d):
-    """
-    cube3d  =  numpy array of the shape (8,3) with coordinates in the clockwise order. first the bottom plane is considered then the top one.
-    points = array of points with shape (N, 3).
+if __name__ == "__main__":
+    from pyinstrument import Profiler
 
-    Returns the indices of the points array which are outside the cube3d
-    """
-    b1, b2, b3, b4, t1, t2, t3, t4 = cube3d
+    def main():
+        for i in range(20):
+            pass
 
-    # 计算三个单位法向量dir1、dir2、dir3
-    dir1 = (t1-b1)
-    size1 = np.linalg.norm(dir1)
-    dir1 = dir1 / size1
+    profiler = Profiler()
+    profiler.start()
 
-    dir2 = (b2-b1)
-    size2 = np.linalg.norm(dir2)
-    dir2 = dir2 / size2
+    result = main()
 
-    dir3 = (b4-b1)
-    size3 = np.linalg.norm(dir3)
-    dir3 = dir3 / size3
+    profiler.stop()
+    profiler.print()
 
-    # 计算中心点cube3d_center
-    cube3d_center = (b1 + t3)/2.0
-
-    # 点到中心点cube3d_center的向量
-    dir_vec = points - cube3d_center
-
-    # dir_vec到3个单位法向量的投影距离，再乘2
-    # 小于box三条边的长度，则符合要求
-    res1 = np.where((np.absolute(dir_vec @ dir1) * 2) <= size1)[0]
-    res2 = np.where((np.absolute(dir_vec @ dir2) * 2) <= size2)[0]
-    res3 = np.where((np.absolute(dir_vec @ dir3) * 2) <= size3)[0]
-
-    # 符合的结果取交集
-    return np.intersect1d(np.intersect1d(res1, res2),res3)
+    with open("profiler.html", "w") as f:
+        f.write(profiler.output_html())

@@ -10,10 +10,12 @@ psutil==6.1.1
 matplotlib==3.10.0
 open3d==0.18.0 # https://www.open3d.org/docs/latest/getting_started.html --> numpy==1.26.3
 # numpy==1.26.3
-cupy==13.3.0
+cupy-cuda12x==13.3.0 # or cupy-cuda11x
 numba==0.60.0
 # grad-cam==1.5.4
 albumentations==1.4.24
+pytransform3d==3.10.1
+distance3d==0.9.0
 
 # log tools (must be installed)
 loguru==0.7.3
@@ -58,10 +60,10 @@ mkdocs-static-i18n==1.2.3
 # test tools (optional)
 pytest==8.3.4
 pytest-cov==6.0.0
-pyinstrument==5.0.0
 
 # performance anylysis tools (optional)
 # scalene==1.5.49 # Not a eazy way to use
+pyinstrument==5.0.0
 
 # check if torch.complie is supported on windows
 # https://github.com/woct0rdho/triton-windows

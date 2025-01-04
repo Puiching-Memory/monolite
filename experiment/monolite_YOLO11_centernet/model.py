@@ -35,7 +35,7 @@ class model(nn.Module):
             nn.Conv2d(256, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 80, 1, 1, 0),
+            nn.Conv2d(128, 80-1, 1, 1, 0),
         )
         self.upsample1 = block.DySample(1024, 2, "lp", 4, False)
         self.upsample2 = block.DySample(512, 2, "lp", 4, False)
@@ -62,7 +62,7 @@ class model(nn.Module):
             x_p5,  # 2
             x_backbone,  # 3-(B, 1024, 12, 40)
             x_neck,  # 4-(B, 256, 48, 160)
-            self.heatmap3D(x_neck),  # 5-(B, 1, 48, 160)
+            self.heatmap3D(x_neck),  # 5-(B, N, 48, 160)
         )
 
 

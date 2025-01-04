@@ -17,8 +17,8 @@ class data_set(DataSetBase):
         self.root_dir = r"C:\Users\11386\Downloads\kitti3d"
         self.drop_last_val = True
         self.split = "trainval"
-        self.batch_size = 16  # We used the BN layer, so a value of >=2 is recommended
-        self.num_workers = 4
+        self.batch_size = 8  # We used the BN layer, so a value of >=2 is recommended
+        self.num_workers = 1
 
         self.class_map = {"Car": 0, "Pedestrian": 1, "Cyclist": 2}
         self.random_flip = 0.5

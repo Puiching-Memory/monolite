@@ -17,7 +17,7 @@ from lib.utils.logger import logger
 
 class loss(LossBase):
     def __init__(self):
-        pass
+        self.heatmap_loss = nn.BCEWithLogitsLoss()
 
     def __call__(
         self, output: tuple[torch.Tensor, ...], target: dict[torch.Tensor]
@@ -29,11 +29,11 @@ class loss(LossBase):
         return:torch.Tensor
             损失函数值
         """
-        
-        #print(output[5].shape, target["heatmap"].shape)
-        loss_heatmap = varifocal_loss(
-            torch.sigmoid(output[5]),
-            target["heatmap"],
+
+        # print(output[5].shape, target["heatmap3D"].shape)
+        loss_heatmap = self.heatmap_loss(
+            output[5].reshape(-1),
+            target["heatmap3D"].reshape(-1),
         )
 
         loss = loss_heatmap

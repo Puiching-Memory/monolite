@@ -121,10 +121,6 @@ def train(
                     **loss_info,
                     "cpu(%)": round(pcontext.cpu_percent(), 2),
                     "ram(%)": round(pcontext.memory_percent(), 2),
-                    **{
-                        f"cuda/{k}": v
-                        for k, v in torch.cuda.memory_stats(device=device).items()
-                    },  # cuda信息
                 }
                 swanlab.log(info)
 
@@ -179,12 +175,12 @@ def train(
 
             # 保存模型预测可视化结果
             model.eval()
-            results = visualizer.decode_output(inputs, outputs)
+            results = visualizer.decode_output(inputs, outputs, data_info)
             results = {key: swanlab.Image(value) for key, value in results.items()}
             swanlab.log(results)
 
             # 保存真值可视化结果
-            results = visualizer.decode_target(inputs, targets)
+            results = visualizer.decode_target(inputs, targets, data_info)
             results = {key: swanlab.Image(value) for key, value in results.items()}
             swanlab.log(results)
 

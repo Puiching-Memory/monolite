@@ -1,8 +1,20 @@
-import numpy as np
-import numba
-from numba.experimental import jitclass
 import cv2
 from typing import Union, Optional, Dict
+from scipy.spatial.transform import Rotation
+import torch.cuda
+
+# if torch.cuda.is_available():
+#     import cupy as np
+
+#     device = torch.cuda.current_device()
+#     print(f"Detected device:{device}, Using cupy for GPU support...")
+#     print(f"GPU name: {torch.cuda.get_device_name(device)}")
+#     print(f"compute capability:{torch.cuda.get_device_capability(device)}")
+#     print(f"{torch.cuda.temperature(device)}°C {torch.cuda.clock_rate(device)}HZ")
+# else:
+#     import numpy as np
+import numpy as np
+
 
 METAINFO = {
     "classes": (
@@ -103,6 +115,18 @@ class Object3d(object):
         corners3d = corners3d + self.pos
 
         return corners3d
+
+    def generate_label_matrix(self) -> np.ndarray:
+        label_matrix = np.hstack(
+            [
+                Rotation.from_euler("xyz", [0, 0, self.ry]).as_matrix(),
+                self.pos.reshape(3, 1),
+            ]
+        )
+
+        label_matrix = np.vstack([label_matrix, np.array([0, 0, 0, 1])])
+
+        return label_matrix
 
     def to_bev_box2d(self, oblique=True, voxel_size=0.1):
         """
@@ -236,6 +260,7 @@ class Calibration(object):
         self.fv = self.P2[1, 1]
         self.tx = self.P2[0, 3] / (-self.fu)
         self.ty = self.P2[1, 3] / (-self.fv)
+        assert self.fu == self.fv, "%.8f != %.8f" % (self.fu, self.fv)
 
     def lidar_to_rect(self, pts_lidar):
         """
@@ -340,13 +365,11 @@ class Calibration(object):
         :param d: (N), the distance between camera and 3d points, d^2 = x^2 + y^2 + z^2
         :return:
         """
-        assert self.fu == self.fv, "%.8f != %.8f" % (self.fu, self.fv)
         fd = np.sqrt((u - self.cu) ** 2 + (v - self.cv) ** 2 + self.fu**2)
         x = ((u - self.cu) * d) / fd + self.tx
         y = ((v - self.cv) * d) / fd + self.ty
         z = np.sqrt(d**2 - x**2 - y**2)
-
-        return np.column_stack((x, y, z))
+        return np.array([x, y, z])
 
     def alpha2ry(self, alpha, u):
         """
@@ -420,8 +443,6 @@ if __name__ == "__main__":
 
     profiler = Profiler()
     profiler.start()
-
-    print(cv2.cuda.getCudaEnabledDeviceCount())
 
     for i in range(1000):
         result = cart_to_hom(np.random.rand(1000, 3))

@@ -17,7 +17,7 @@ import onnx
 def export(model, device,test_loader, logger):
     logger.info(f"Forward once to generate onnx model ...")
     for inputs, targets, data_info in test_loader:
-        #inputs = inputs.to(device)
+        inputs = inputs.to(device)
         #output = model(inputs)
         with open(os.path.join(args.cfg, "checkpoint", "model.onnx"), "wb") as f:
             onnx_program = torch.onnx.export(
