@@ -64,9 +64,9 @@ class data_set(DataSetBase):
         return DataLoader(
             dataset=self.test_set,
             batch_size=1,
-            num_workers=1,
+            num_workers=0,
             shuffle=True,
-            pin_memory=True,
+            pin_memory=False,
             drop_last=False,
         )
 
