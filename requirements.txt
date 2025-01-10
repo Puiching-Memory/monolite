@@ -5,16 +5,16 @@ torchdata==0.10.1
 # main dependencies (must be installed)
 torchinfo==1.8.0
 opencv-python==4.10.0.84
-pillow==10.4.0
+pillow==10.4.0 # TODO: mkdocs-material[imaging] 9.5.49 depends on pillow~=10.2; extra == "imaging"
 psutil==6.1.1
 matplotlib==3.10.0
-open3d==0.18.0 # https://www.open3d.org/docs/latest/getting_started.html --> numpy==1.26.3
-# numpy==1.26.3
+open3d==0.19.0 # https://www.open3d.org/docs/latest/getting_started.html
+numpy==2.0.0
 cupy-cuda12x==13.3.0 # or cupy-cuda11x
-numba==0.60.0
+numba==0.60.0 # TODO: numpy<2.1 and >=1.22
 # grad-cam==1.5.4
-albumentations==1.4.24
-pytransform3d==3.10.1
+albumentations==2.0.0
+pytransform3d==3.11.0
 distance3d==0.9.0
 
 # log tools (must be installed)
@@ -25,7 +25,7 @@ swanlab==0.4.2
 
 # visualization tools (optional)
 pyecharts==2.0.7
-xlwings==0.33.5
+xlwings==0.33.6
 
 # export tools (optional)
 onnx==1.17.0
