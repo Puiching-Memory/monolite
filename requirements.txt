@@ -4,7 +4,7 @@ torchdata==0.10.1
 
 # main dependencies (must be installed)
 torchinfo==1.8.0
-opencv-python==4.10.0.84
+opencv-python==4.11.0.86
 pillow==10.4.0 # TODO: mkdocs-material[imaging] 9.5.49 depends on pillow~=10.2; extra == "imaging"
 psutil==6.1.1
 matplotlib==3.10.0
@@ -20,7 +20,7 @@ distance3d==0.9.0
 # log tools (must be installed)
 loguru==0.7.3
 rich==13.9.4
-swanlab==0.4.2
+swanlab==0.4.3
 # tqdm==4.67.1
 
 # visualization tools (optional)
