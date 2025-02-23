@@ -1,39 +1,38 @@
 # NOTE: install torch with CUDA >= 12.4 first!
 # torch==2.5.1
-torchdata==0.10.1
+torchdata==0.11.0
 
 # main dependencies (must be installed)
 torchinfo==1.8.0
 opencv-python==4.11.0.86
-pillow==10.4.0 # TODO: mkdocs-material[imaging] 9.5.49 depends on pillow~=10.2; extra == "imaging"
-psutil==6.1.1
+pillow==10.2.0 # TODO: mkdocs-material[imaging] 9.5.49 depends on pillow~=10.2; extra == "imaging"
+psutil==7.0.0
 matplotlib==3.10.0
 open3d==0.19.0 # https://www.open3d.org/docs/latest/getting_started.html
-numpy==2.0.0
+numpy==2.1.2
 cupy-cuda12x==13.3.0 # or cupy-cuda11x
-numba==0.60.0 # TODO: numpy<2.1 and >=1.22
+numba==0.61.0
 # grad-cam==1.5.4
-albumentations==2.0.0
-pytransform3d==3.11.0
+albumentations==2.0.4
+pytransform3d==3.13.0
 distance3d==0.9.0
 
 # log tools (must be installed)
 loguru==0.7.3
 rich==13.9.4
-swanlab==0.4.3
+swanlab==0.4.8
 # tqdm==4.67.1
 
 # visualization tools (optional)
-pyecharts==2.0.7
-xlwings==0.33.6
+# pyecharts==2.0.7
+# xlwings==0.33.6
 
 # export tools (optional)
 onnx==1.17.0
 onnxruntime-gpu==1.20.1
-onnxscript==0.1.0.dev20241102
+onnxscript==0.2.0
 onnxsim==0.4.36
-torch-tensorrt==2.5.0 # https://pytorch.org/TensorRT/getting_started/installation.html#installation
-# tensorrt==10.3.0 # Can not install by deafulf, Use: >>> pip install --extra-index-url https://pypi.nvidia.com tensorrt-cu12-libs==10.3.0
+torch-tensorrt==2.6.0 # https://pytorch.org/TensorRT/getting_started/installation.html#installation
 # pip install "nvidia-modelopt[all]~=0.19.0" --extra-index-url https://pypi.nvidia.com # https://nvidia.github.io/TensorRT-Model-Optimizer/getting_started/2_installation.html
 pnnx==20241223
 ncnn==1.0.20241226
@@ -44,26 +43,26 @@ monkeytype==23.3.0
 
 # optimizer tools (optional)
 # https://mmengine.readthedocs.io/zh-cn/latest/common_usage/better_optimizers.html
-prodigyopt==1.0
-lion-pytorch==0.2.3
-Sophia-Optimizer==0.2.5
+# prodigyopt==1.0
+# lion-pytorch==0.2.3
+# Sophia-Optimizer==0.2.5
 
 # hyperparameter (optional)
-optuna==4.1.0
+# optuna==4.2.1
 
 # doc tools (optional)
-mkdocs-material[imaging]==9.5.49
+mkdocs-material[imaging]==9.6.5
 mkdocs-git-revision-date-localized-plugin==1.3.0
 mkdocs-git-authors-plugin==0.9.2
-mkdocs-static-i18n==1.2.3
+mkdocs-static-i18n==1.3.0
 
 # test tools (optional)
-pytest==8.3.4
-pytest-cov==6.0.0
+# pytest==8.3.4
+# pytest-cov==6.0.0
 
 # performance anylysis tools (optional)
 # scalene==1.5.49 # Not a eazy way to use
-pyinstrument==5.0.0
+pyinstrument==5.0.1
 
 # check if torch.complie is supported on windows
 # https://github.com/woct0rdho/triton-windows

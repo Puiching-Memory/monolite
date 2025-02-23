@@ -53,21 +53,9 @@ Note that we are an engineering project, the code will be updated synchronously,
 ```
 conda create -n monolite python=3.12
 conda activate monolite
-pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
-pip install https://github.com/isl-org/Open3D/releases/download/main-devel/open3d-0.18.0+c0be4a6-cp312-cp312-win_amd64.whl
+pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu126
 pip install -r requirements.txt
 ```
-
-测试版环境：
-
-```
-conda create -n monolite python=3.13 python-freethreading # not support windows yet
-conda create -n monolite python=3.13
-conda activate monolite
-pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/test/cu126
-pip install open3d # not support py3.13 yet 
-```
-
 
 ### 前置组件
 
@@ -105,7 +93,7 @@ TODO
 # Inference推理
 
 ```
-python tools\detect.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
+python tools\test.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
 ```
 
 # Train训练
