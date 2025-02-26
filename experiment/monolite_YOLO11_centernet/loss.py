@@ -37,7 +37,7 @@ class loss(LossBase):
         )
 
         loss = loss_heatmap
-        loss_info = {"loss_heatmap": loss_heatmap}
+        loss_info = {"loss_heatmap3D": loss_heatmap}
 
         return loss, loss_info
 

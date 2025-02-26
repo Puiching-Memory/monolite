@@ -3,7 +3,7 @@ import os
 
 sys.path.append(os.path.abspath("./"))
 
-from lib.utils.logger import logger, build_progress
+from lib.utils.logger import logger
 from lib.models.init import weight_init
 from lib.cfg.base import (
     LossBase,
@@ -27,13 +27,12 @@ torch.backends.cudnn.benchmark = True
 
 import importlib
 import argparse
-from rich.live import Live
 from torchinfo import summary
 import time
 import swanlab
 import datetime
-import psutil
 from typing import Optional
+from tqdm import tqdm
 
 try:
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -41,8 +40,7 @@ except:
     local_rank = -1
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-pid = os.getpid()
-pcontext = psutil.Process(pid)
+# pid = os.getpid()  # 获取进程id
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
 # os.environ["TORCH_LOGS"] = "+dynamo"
 # os.environ["TORCHDYNAMO_VERBOSE"] = "1"
@@ -67,150 +65,104 @@ def train(
     np.random.seed(trainner.get_seed())
     random.seed(trainner.get_seed())
 
-    table, progress, task_ids = build_progress(
-        len(train_loader), trainner.get_end_epoch()
-    )
-    with Live(table, refresh_per_second=10) as live:
-        progress["Progress"].update(
-            task_ids["jobId_all"],
-            completed=trainner.get_start_epoch(),
-            total=trainner.get_end_epoch(),
-        )
-        progress["Info"].update(
-            task_ids["jobId_epoch_info"],
-            completed=trainner.get_start_epoch(),
-            total=trainner.get_end_epoch(),
-        )
-        for epoch_now in range(trainner.get_start_epoch(), trainner.get_end_epoch()):
-            epoch_start_time = time.perf_counter_ns()
-            model.train()
-            for i, (inputs, targets, data_info) in enumerate(train_loader):
-                optimizer.zero_grad()
-                # inputs = inputs.to(device,memory_format=torch.channels_last)
-                inputs = inputs.to(device)
-                targets = {key: value.to(device) for key, value in targets.items()}
-                with torch.autocast(
-                    device_type="cuda" if torch.cuda.is_available() else "cpu",
-                    enabled=trainner.is_amp(),
-                ):
-                    forward_time = time.perf_counter_ns()
-                    outputs = model(inputs)
-                    forward_time = (time.perf_counter_ns() - forward_time) / 1e6  # ms
+    # epoch循环
+    bar_epoch = tqdm(total=trainner.get_end_epoch()-trainner.get_start_epoch(),position=0,leave=True)
+    for epoch in range(trainner.get_start_epoch(), trainner.get_end_epoch()):
+        epoch_start_time = time.perf_counter_ns()
+        model.train()
+        # dataset循环
+        bar_dataset = tqdm(train_loader,position=1,leave=False)
+        for i, (inputs, targets, data_info) in enumerate(train_loader):
+            optimizer.zero_grad()
+            # inputs = inputs.to(device,memory_format=torch.channels_last)
+            inputs = inputs.to(device)
+            targets = {key: value.to(device) for key, value in targets.items()}
+            with torch.autocast(
+                device_type="cuda" if torch.cuda.is_available() else "cpu",
+                enabled=trainner.is_amp(),
+            ):
+                forward_time = time.perf_counter_ns()
+                outputs = model(inputs)
+                forward_time = (time.perf_counter_ns() - forward_time) / 1e6  # ms
 
-                    loss_time = time.perf_counter_ns()
-                    loss, loss_info = loss_fn(outputs, targets)
-                    loss_time = (time.perf_counter_ns() - loss_time) / 1e6  # ms
+                loss_time = time.perf_counter_ns()
+                loss, loss_info = loss_fn(outputs, targets)
+                loss_time = (time.perf_counter_ns() - loss_time) / 1e6  # ms
 
-                scaler.scale(loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
-                if ema_model is not None:
-                    ema_model.update_parameters(model)
+            if ema_model is not None:
+                ema_model.update_parameters(model)
+                
+            info_dataset = {
+                "micostep": i,
+                "forward_time(ms)": forward_time,
+                "loss_time(ms)": loss_time,
+                "dataload_time(ms)": round(
+                    torch.mean(data_info["dataload_time"]).item(), 4
+                ),
+                "loss": round(loss.item(), 2),
+                **loss_info,
+            }
+            swanlab.log(info_dataset)
+            bar_dataset.set_postfix({"loss": round(loss.item(), 2)})
+            bar_dataset.update()
+            # break
 
-                info = {
-                    "epoch": epoch_now,
-                    "micostep": i,
-                    "allstep": len(train_loader),
-                    "forward_time(ms)": forward_time,
-                    "loss_time(ms)": loss_time,
-                    "dataload_time(ms)": round(
-                        torch.mean(data_info["dataload_time"]).item(), 4
-                    ),
-                    "loss": round(loss.item(), 2),
-                    **loss_info,
-                    "cpu(%)": round(pcontext.cpu_percent(), 2),
-                    "ram(%)": round(pcontext.memory_percent(), 2),
-                }
-                swanlab.log(info)
+        scheduler.step()
 
-                progress["Progress"].update(
-                    task_ids["jobId_microstep"],
-                    completed=info["micostep"],
-                    total=info["allstep"],
-                )
-                progress["Info"].update(
-                    task_ids["jobId_microstep_info"],
-                    completed=info["micostep"],
-                    total=info["allstep"],
-                )
-                progress["Time"].update(
-                    task_ids["jobId_datatime_info"], completed=info["dataload_time(ms)"]
-                )
-                progress["Time"].update(
-                    task_ids["jobId_losstime_info"], completed=info["loss_time(ms)"]
-                )
-                progress["Time"].update(
-                    task_ids["jobId_forwardtime_info"],
-                    completed=info["forward_time(ms)"],
-                )
-                progress["Loss"].update(
-                    task_ids["jobId_loss_info"], completed=info["loss"]
-                )
-                progress["System"].update(
-                    task_ids["jobId_cpu_info"], completed=info["cpu(%)"]
-                )
-                progress["System"].update(
-                    task_ids["jobId_ram_info"], completed=info["ram(%)"]
-                )
-                # break
-
-            scheduler.step()
-
-            # 保存模型
-            if not os.path.exists(trainner.get_save_path()):
-                os.mkdir(trainner.get_save_path())
-            torch.save(
-                {
-                    "model": model.state_dict(),
-                    "optimizer": optimizer.state_dict(),
-                    "scheduler": scheduler.state_dict(),
-                    "epoch": epoch_now,
-                },
-                os.path.join(trainner.get_save_path(), "model.pth"),
-            )
-            logger.info(
-                f"checkpoint: {epoch_now+1} saved to {trainner.get_save_path()}"
-            )
-
-            # 保存模型预测可视化结果
-            model.eval()
-            results = visualizer.decode_output(inputs, outputs, data_info)
-            results = {key: swanlab.Image(value) for key, value in results.items()}
-            swanlab.log(results)
-
-            # 保存真值可视化结果
-            results = visualizer.decode_target(inputs, targets, data_info)
-            results = {key: swanlab.Image(value) for key, value in results.items()}
-            swanlab.log(results)
-
-            progress["Progress"].update(
-                task_ids["jobId_all"],
-                completed=epoch_now + 1,
-                total=trainner.get_end_epoch(),
-            )
-            progress["Info"].update(
-                task_ids["jobId_epoch_info"],
-                completed=epoch_now + 1,
-                total=trainner.get_end_epoch(),
-            )
-
-            logger.info(
-                f"epoch {epoch_now+1} finished, time: {time.perf_counter_ns()-epoch_start_time:.2f}s"
-            )
-
-    if ema_model is not None:
-        logger.info("update bn with ema model, it may takes few minutes ...")
-        torch.optim.swa_utils.update_bn(train_loader, ema_model, device=device)
-        logger.info(
-            f"ema checkpoint saved to {os.path.join(trainner.get_save_path(), "model_ema.pth")}"
-        )
+        # 保存模型
+        if not os.path.exists(trainner.get_save_path()):
+            os.mkdir(trainner.get_save_path())
         torch.save(
             {
-                "model": ema_model.state_dict(),
+                "model": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "scheduler": scheduler.state_dict(),
+                "epoch": epoch,
             },
-            os.path.join(trainner.get_save_path(), "model_ema.pth"),
+            os.path.join(trainner.get_save_path(), "model.pth"),
         )
+        logger.info(
+            f"checkpoint: {epoch} saved to {trainner.get_save_path()}"
+        )
+
+        # 保存模型预测可视化结果
+        model.eval()
+        results = visualizer.decode_output(inputs, outputs, data_info)
+        results = {key: swanlab.Image(value) for key, value in results.items()}
+        swanlab.log(results)
+
+        # 保存真值可视化结果
+        results = visualizer.decode_target(inputs, targets, data_info)
+        results = {key: swanlab.Image(value) for key, value in results.items()}
+        swanlab.log(results)
+
+        logger.info(
+            f"epoch {epoch} finished, time: {time.perf_counter_ns()-epoch_start_time:.2f}s"
+        )
+
+        if ema_model is not None:
+            logger.info("update bn with ema model, it may takes few minutes ...")
+            torch.optim.swa_utils.update_bn(train_loader, ema_model, device=device)
+            logger.info(
+                f"ema checkpoint saved to {os.path.join(trainner.get_save_path(), "model_ema.pth")}"
+            )
+            torch.save(
+                {
+                    "model": ema_model.state_dict(),
+                },
+                os.path.join(trainner.get_save_path(), "model_ema.pth"),
+            )
+            
+        info_epoch = {
+            "epoch": epoch,
+        }
+
+        bar_epoch.set_postfix(info_epoch)
+        bar_epoch.update()
 
 
 if __name__ == "__main__":
@@ -239,6 +191,7 @@ if __name__ == "__main__":
         )
     # 添加模块搜索路径
     sys.path.append(args.cfg)
+    logger.info(f"searching module in {args.cfg}")
 
     # 导入训练配置
     trainner: TrainerBase = importlib.import_module("trainner").trainner()
@@ -305,6 +258,7 @@ if __name__ == "__main__":
     logger.info(optimizer)
     logger.info(scheduler)
 
+    # 开始训练
     train(
         model,
         None,

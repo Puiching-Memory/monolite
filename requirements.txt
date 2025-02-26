@@ -19,9 +19,9 @@ distance3d==0.9.0
 
 # log tools (must be installed)
 loguru==0.7.3
-rich==13.9.4
+# rich==13.9.4
 swanlab==0.4.8
-# tqdm==4.67.1
+tqdm==4.67.1
 
 # visualization tools (optional)
 # pyecharts==2.0.7
