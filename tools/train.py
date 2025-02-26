@@ -3,7 +3,7 @@ import os
 
 sys.path.append(os.path.abspath("./"))
 
-from lib.utils.logger import logger
+from lib.utils.logger import get_logger
 from lib.models.init import weight_init
 from lib.cfg.base import (
     LossBase,
@@ -45,6 +45,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # os.environ["TORCH_LOGS"] = "+dynamo"
 # os.environ["TORCHDYNAMO_VERBOSE"] = "1"
 
+
 def train(
     model: torch.nn.Module,
     ema_model: Optional[torch.nn.Module],
@@ -61,18 +62,24 @@ def train(
     scaler = torch.amp.GradScaler()
 
     # pin random seed
+    logger.info(f"set random seed: {trainner.get_seed()}")
     torch.manual_seed(trainner.get_seed())
     np.random.seed(trainner.get_seed())
     random.seed(trainner.get_seed())
 
     # epoch循环
-    bar_epoch = tqdm(total=trainner.get_end_epoch()-trainner.get_start_epoch(),position=0,leave=True)
+    microstep = 0
+    bar_epoch = tqdm(
+        total=trainner.get_end_epoch() - trainner.get_start_epoch(),
+        position=0,
+        leave=True,
+    )
     for epoch in range(trainner.get_start_epoch(), trainner.get_end_epoch()):
         epoch_start_time = time.perf_counter_ns()
         model.train()
         # dataset循环
-        bar_dataset = tqdm(train_loader,position=1,leave=False)
-        for i, (inputs, targets, data_info) in enumerate(train_loader):
+        bar_dataset = tqdm(train_loader, position=1, leave=False)
+        for index, (inputs, targets, data_info) in enumerate(train_loader):
             optimizer.zero_grad()
             # inputs = inputs.to(device,memory_format=torch.channels_last)
             inputs = inputs.to(device)
@@ -95,15 +102,15 @@ def train(
 
             if ema_model is not None:
                 ema_model.update_parameters(model)
-                
+
             info_dataset = {
-                "micostep": i,
+                "microstep": (microstep := microstep + 1),
                 "forward_time(ms)": forward_time,
                 "loss_time(ms)": loss_time,
                 "dataload_time(ms)": round(
                     torch.mean(data_info["dataload_time"]).item(), 4
                 ),
-                "loss": round(loss.item(), 2),
+                "loss": loss,
                 **loss_info,
             }
             swanlab.log(info_dataset)
@@ -125,9 +132,7 @@ def train(
             },
             os.path.join(trainner.get_save_path(), "model.pth"),
         )
-        logger.info(
-            f"checkpoint: {epoch} saved to {trainner.get_save_path()}"
-        )
+        logger.info(f"checkpoint: {epoch} saved to {trainner.get_save_path()}")
 
         # 保存模型预测可视化结果
         model.eval()
@@ -156,7 +161,7 @@ def train(
                 },
                 os.path.join(trainner.get_save_path(), "model_ema.pth"),
             )
-            
+
         info_epoch = {
             "epoch": epoch,
         }
@@ -174,6 +179,8 @@ if __name__ == "__main__":
         help="path to config file",
     )
     args = parser.parse_args()
+    
+    logger = get_logger()
 
     # 初始化swanlab,启动$swanlab watch ./logs
     try:
@@ -198,15 +205,15 @@ if __name__ == "__main__":
 
     # 导入模型
     model: torch.nn.Module = importlib.import_module("model").model()
-    
+
     # 导入数据集
     data_set: DataSetBase = importlib.import_module("dataset").data_set()
-    
+
     # 打印模型信息
     print(
         f"\n{summary(model, input_size=(data_set.get_bath_size(),3,384,1280),mode='train',verbose=0,depth=2)}"
     )
-        
+
     # 导入优化器
     optimizer: OptimizerBase = importlib.import_module("optimizer").optimizer(model)
     optimizer: torch.optim.Optimizer = optimizer.get_optimizer()

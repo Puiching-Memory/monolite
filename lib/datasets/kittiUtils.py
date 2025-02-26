@@ -1,18 +1,5 @@
-import cv2
 from typing import Union, Optional, Dict
 from scipy.spatial.transform import Rotation
-import torch.cuda
-
-# if torch.cuda.is_available():
-#     import cupy as np
-
-#     device = torch.cuda.current_device()
-#     print(f"Detected device:{device}, Using cupy for GPU support...")
-#     print(f"GPU name: {torch.cuda.get_device_name(device)}")
-#     print(f"compute capability:{torch.cuda.get_device_capability(device)}")
-#     print(f"{torch.cuda.temperature(device)}°C {torch.cuda.clock_rate(device)}HZ")
-# else:
-#     import numpy as np
 import numpy as np
 
 
@@ -48,7 +35,7 @@ def get_objects_from_label(label_path: str) -> list:
     return [Object3d(line) for line in lines]
 
 
-class Object3d(object):
+class Object3d:
     def __init__(self, line: str):
         label = line.strip().split(" ")
         self.cls_type = label[0]
@@ -70,28 +57,22 @@ class Object3d(object):
         self.dis_to_cam = np.linalg.norm(self.pos)
         self.ry = float(label[14])
         self.score = float(label[15]) if len(label) == 16 else -1.0
-        self.level_str = None
-        self.level = self.get_obj_level()
+        self.level_int, self.level_str = self.get_obj_level()
 
-    def get_obj_level(self):
+    def get_obj_level(self) -> tuple[int, str]:
         height = float(self.box2d[3]) - float(self.box2d[1]) + 1
 
         if self.trucation == -1:
-            self.level_str = "DontCare"
-            return 0
+            return 0, "DontCare"
 
         if height >= 40 and self.trucation <= 0.15 and self.occlusion <= 0:
-            self.level_str = "Easy"
-            return 1  # Easy
+            return 1, "Easy"
         elif height >= 25 and self.trucation <= 0.3 and self.occlusion <= 1:
-            self.level_str = "Moderate"
-            return 2  # Moderate
+            return 2, "Moderate"
         elif height >= 25 and self.trucation <= 0.5 and self.occlusion <= 2:
-            self.level_str = "Hard"
-            return 3  # Hard
+            return 3, "Hard"
         else:
-            self.level_str = "UnKnown"
-            return 4
+            return 4, "UnKnown"
 
     def generate_corners3d(self):
         """
@@ -208,7 +189,7 @@ def get_calib_from_file(calib_file: str) -> Dict[str, np.ndarray]:
     }
 
 
-class Calibration(object):
+class Calibration:
     """kitti calibration class
 
     Args:

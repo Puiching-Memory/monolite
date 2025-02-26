@@ -63,7 +63,7 @@ class KITTI(data.Dataset):
         self.anchor3D = np.array(self.anchor3D).reshape((-1, 3))
         print(self.anchor3D.shape)
 
-    def get_image(self, index_string: str) -> torch.Tensor:
+    def get_image_torch(self, index_string: str) -> torch.Tensor:
         img_file = os.path.join(self.image_dir, f"{index_string}.png")
         assert os.path.exists(img_file)
         image = torchvision.io.decode_image(img_file)  # (C,H,W)
@@ -133,7 +133,7 @@ class KITTI(data.Dataset):
         # 并行执行
         with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
             # 提交任务
-            future_image = executor.submit(self.get_image, index_string)
+            future_image = executor.submit(self.get_image_torch, index_string)
             future_labels = executor.submit(self.get_labels, index_string)
             future_calib = executor.submit(self.get_calib, index_string)
 
