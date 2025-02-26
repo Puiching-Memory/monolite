@@ -59,12 +59,12 @@ pip install -r requirements.txt
 
 ### 前置组件
 
-| 系统    | 组件               | 下载URL                                                                                             | 备注                                           |
-| ------- | ------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| windows | Visual Studio 2022 | [download](https://visualstudio.microsoft.com/zh-hans/vs/)                                             | *注意不同版本间可能会产生冲突                  |
-| windows | Cmake              | [download](https://github.com/Kitware/CMake/releases/download/v3.30.5/cmake-3.30.5-windows-x86_64.msi) | 已测试3.30.5                                   |
-| windows | MSbuild            | 通过VS2022下载                                                                                      |                                                |
-| windows | MSVC               | 通过VS2022下载                                                                                      | 已测试19.42.34433<br />*手动添加至环境变量PATH |
+| 系统    | 组件               | 下载URL                                                                                             | 备注                          |
+| ------- | ------------------ | --------------------------------------------------------------------------------------------------- | ----------------------------- |
+| windows | Visual Studio 2022 | [download](https://visualstudio.microsoft.com/zh-hans/vs/)                                             | *注意不同版本间可能会产生冲突 |
+| windows | Cmake              | [download](https://github.com/Kitware/CMake/releases/download/v3.30.5/cmake-3.30.5-windows-x86_64.msi) | 已测试3.30.5~3.31.6           |
+| windows | MSbuild            | 通过VS2022下载                                                                                      |                               |
+| windows | MSVC               | 通过VS2022下载                                                                                      | 已测试19.42.34433~            |
 
 ~~Docker~~（暂不可用）
 
@@ -136,6 +136,12 @@ python tools\export_ep.py --cfg C:\workspace\github\monolite\experiment\monolite
 
 ```
 python tools\export_pt.py --cfg C:\workspace\github\monolite\experiment\monolite_YOLO11_centernet
+```
+
+# 运行测试
+
+```
+pytest test/ --cov=lib --cov-report=html --benchmark-enable --html=report.html
 ```
 
 # Confirm致谢

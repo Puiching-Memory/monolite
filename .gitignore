@@ -16,3 +16,5 @@ _*.py
 *.html
 *.xml
 *.pptx
+htmlcov/
+assets/
