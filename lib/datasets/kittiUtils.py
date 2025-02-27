@@ -4,27 +4,15 @@ import numpy as np
 from dataclasses import dataclass
 
 
-METAINFO = {
-    "classes": (
-        "Pedestrian",
-        "Cyclist",
-        "Car",
-        "Van",
-        "Truck",
-        "Person_sitting",
-        "Tram",
-        "Misc",
-    ),
-    "palette": [
-        (106, 0, 228),
-        (119, 11, 32),
-        (165, 42, 42),
-        (0, 0, 192),
-        (197, 226, 255),
-        (0, 60, 100),
-        (0, 0, 142),
-        (255, 77, 255),
-    ],
+COLOUR_MAP = {
+    "Pedestrian": (106, 0, 228),
+    "Cyclist": (119, 11, 32),
+    "Car": (165, 42, 42),
+    "Van": (0, 0, 192),
+    "Truck": (197, 226, 255),
+    "Person_sitting": (0, 60, 100),
+    "Tram": (0, 0, 142),
+    "Misc": (255, 77, 255),
 }
 
 ################  Object3D  ##################
@@ -77,9 +65,11 @@ class Object3d:
     pos_z: float
     ry: float
     score: float = -1.0
-    
+
     def __post_init__(self):
-        self.box2d = np.array([self.box2d_x_min, self.box2d_y_min, self.box2d_x_max, self.box2d_y_max])
+        self.box2d = np.array(
+            [self.box2d_x_min, self.box2d_y_min, self.box2d_x_max, self.box2d_y_max]
+        )
         self.pos = np.array([self.pos_x, self.pos_y, self.pos_z])
         self.dis_to_cam = np.linalg.norm(self.pos)
         self.level_int, self.level_str = self.get_obj_level()
@@ -162,26 +152,29 @@ class Object3d:
 
 
 ###################  calibration  ###################
-def get_calib_from_file(calib_file: str) -> Dict[str, np.ndarray]:
-    with open(calib_file) as f:
+
+
+def get_calib_from_file(calib_path: str) -> object:
+    with open(calib_path) as f:
         lines = f.readlines()
 
     # 使用列表推导式读取数据
     matrices = [
         np.array(lines[i].strip().split(" ")[1:], dtype=np.float32) for i in range(7)
     ]
+    
+    P0 = matrices[0].reshape(3, 4)
+    P1 = matrices[1].reshape(3, 4)
+    P2 = matrices[2].reshape(3, 4)
+    P3 = matrices[3].reshape(3, 4)
+    R0 = matrices[4].reshape(3, 3)
+    Tr_velo_to_cam = matrices[5].reshape(3, 4)
+    Tr_imu_to_velo = matrices[6].reshape(3, 4)
 
-    return {
-        "P0": matrices[0].reshape(3, 4),
-        "P1": matrices[1].reshape(3, 4),
-        "P2": matrices[2].reshape(3, 4),
-        "P3": matrices[3].reshape(3, 4),
-        "R0": matrices[4].reshape(3, 3),
-        "Tr_velo_to_cam": matrices[5].reshape(3, 4),
-        "Tr_imu_to_velo": matrices[6].reshape(3, 4),
-    }
+    return Calibration(P0, P1, P2, R0, Tr_velo_to_cam, Tr_imu_to_velo)
 
 
+@dataclass
 class Calibration:
     """kitti calibration class
 
@@ -215,17 +208,15 @@ class Calibration:
 
     Ref (KITTI paper): http://www.cvlibs.net/publications/Geiger2013IJRR.pdf
     """
-
-    def __init__(self, calib: Union[str, dict]) -> None:
-        if isinstance(calib, str):
-            calib = get_calib_from_file(calib)
-        self.P0 = calib["P0"]  # 3 x 4
-        self.P1 = calib["P1"]  # 3 x 4
-        self.P2 = calib["P2"]  # 3 x 4
-        self.R0 = calib["R0"]  # 3 x 3
-        self.V2C = calib["Tr_velo_to_cam"]  # 3 x 4
+    P0: np.ndarray  # 3 x 4
+    P1: np.ndarray  # 3 x 4
+    P2: np.ndarray  # 3 x 4
+    R0: np.ndarray  # 3 x 3
+    V2C: np.ndarray  # 3 x 4
+    Tr_imu_to_velo: np.ndarray  # 3 x 4
+    
+    def __post_init__(self):
         self.C2V = inverse_rigid_trans(self.V2C)
-        self.Tr_imu_to_velo = calib["Tr_imu_to_velo"]  # 3 x 4
 
         # Camera intrinsics and extrinsics
         self.cu = self.P2[0, 2]
@@ -234,6 +225,7 @@ class Calibration:
         self.fv = self.P2[1, 1]
         self.tx = self.P2[0, 3] / (-self.fu)
         self.ty = self.P2[1, 3] / (-self.fv)
+        
         assert self.fu == self.fv, "%.8f != %.8f" % (self.fu, self.fv)
 
     def lidar_to_rect(self, pts_lidar):
@@ -372,13 +364,13 @@ class Calibration:
         return alpha
 
 
-def cart_to_hom(pts: np.ndarray) -> np.ndarray:
-    """
-    将笛卡尔坐标转换为齐次坐标
-    :param pts: 形状为 (N, 3 或 2) 的 numpy 数组，表示 N 个点的笛卡尔坐标
-    :return pts_hom: 形状为 (N, 4 或 3) 的 numpy 数组，表示 N 个点的齐次坐标
-    """
-    return np.hstack((pts, np.ones((pts.shape[0], 1), dtype=np.float32)))
+    def cart_to_hom(self, pts: np.ndarray) -> np.ndarray:
+        """
+        将笛卡尔坐标转换为齐次坐标
+        :param pts: 形状为 (N, 3 或 2) 的 numpy 数组，表示 N 个点的笛卡尔坐标
+        :return pts_hom: 形状为 (N, 4 或 3) 的 numpy 数组，表示 N 个点的齐次坐标
+        """
+        return np.hstack((pts, np.ones((pts.shape[0], 1), dtype=np.float32)))
 
 
 def inverse_rigid_trans(Tr: np.ndarray) -> np.ndarray:
