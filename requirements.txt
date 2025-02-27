@@ -30,7 +30,7 @@ tqdm==4.67.1
 # export tools (optional)
 onnx==1.17.0
 onnxruntime-gpu==1.20.1
-onnxscript==0.2.0
+onnxscript==0.2.1
 onnxsim==0.4.36
 torch-tensorrt==2.6.0 # https://pytorch.org/TensorRT/getting_started/installation.html#installation
 # pip install "nvidia-modelopt[all]~=0.19.0" --extra-index-url https://pypi.nvidia.com # https://nvidia.github.io/TensorRT-Model-Optimizer/getting_started/2_installation.html

@@ -1,6 +1,7 @@
 from typing import Union, Optional, Dict
 from scipy.spatial.transform import Rotation
 import numpy as np
+from dataclasses import dataclass
 
 
 METAINFO = {
@@ -32,31 +33,55 @@ METAINFO = {
 def get_objects_from_label(label_path: str) -> list:
     with open(label_path, "r") as f:
         lines = f.readlines()
-    return [Object3d(line) for line in lines]
+        lines = [line.strip().split(" ") for line in lines]  # 切片
+        lines = [
+            [
+                str(line[0]),
+                float(line[1]),
+                int(line[2]),
+                float(line[3]),
+                float(line[4]),
+                float(line[5]),
+                float(line[6]),
+                float(line[7]),
+                float(line[8]),
+                float(line[9]),
+                float(line[10]),
+                float(line[11]),
+                float(line[12]),
+                float(line[13]),
+                float(line[14]),
+            ]
+            for line in lines
+        ]  # 类型转换
+
+    return [Object3d(*line) for line in lines]
 
 
+@dataclass
 class Object3d:
-    def __init__(self, line: str):
-        label = line.strip().split(" ")
-        self.cls_type = label[0]
-        self.trucation = float(label[1])
-        self.occlusion = float(
-            label[2]
-        )  # 0:fully visible 1:partly occluded 2:largely occluded 3:unknown
-        self.alpha = float(label[3])
-        self.box2d = np.array(
-            (float(label[4]), float(label[5]), float(label[6]), float(label[7])),
-            dtype=np.float32,
-        )
-        self.h = float(label[8])
-        self.w = float(label[9])
-        self.l = float(label[10])
-        self.pos = np.array(
-            (float(label[11]), float(label[12]), float(label[13])), dtype=np.float32
-        )
+    cls_type: str
+    trucation: float  # 截断 0~1
+    # occlusion: 0:fully visible 1:partly occluded 2:largely occluded 3:unknown
+    occlusion: int  # 遮挡
+    alpha: float
+    box2d_x_min: float
+    box2d_y_min: float
+    box2d_x_max: float
+    box2d_y_max: float
+    h: float
+    w: float
+    l: float
+    pos_x: float
+    pos_y: float
+    pos_z: float
+    ry: float
+    score: float = -1.0
+    
+    def __post_init__(self):
+        self.box2d = np.array([self.box2d_x_min, self.box2d_y_min, self.box2d_x_max, self.box2d_y_max])
+        self.pos = np.array([self.pos_x, self.pos_y, self.pos_z])
         self.dis_to_cam = np.linalg.norm(self.pos)
-        self.ry = float(label[14])
-        self.score = float(label[15]) if len(label) == 16 else -1.0
         self.level_int, self.level_str = self.get_obj_level()
 
     def get_obj_level(self) -> tuple[int, str]:
@@ -109,45 +134,13 @@ class Object3d:
 
         return label_matrix
 
-    def to_bev_box2d(self, oblique=True, voxel_size=0.1):
+    def to_bev_box2d(self):
         """
-        :param bev_shape: (2) for bev shape (h, w), => (y_max, x_max) in image
-        :param voxel_size: float, 0.1m
-        :param oblique:
-        :return: box2d (4, 2)/ (4) in image coordinate
+        将3D物体的2D框转换为BEV视角下的2D框
+        ---
+        TODO
         """
-        if oblique:
-            corners3d = self.generate_corners3d()
-            xz_corners = corners3d[0:4, [0, 2]]
-            box2d = np.zeros((4, 2), dtype=np.int32)
-            box2d[:, 0] = ((xz_corners[:, 0] - Object3d.MIN_XZ[0]) / voxel_size).astype(
-                np.int32
-            )
-            box2d[:, 1] = (
-                Object3d.BEV_SHAPE[0]
-                - 1
-                - ((xz_corners[:, 1] - Object3d.MIN_XZ[1]) / voxel_size).astype(
-                    np.int32
-                )
-            )
-            box2d[:, 0] = np.clip(box2d[:, 0], 0, Object3d.BEV_SHAPE[1])
-            box2d[:, 1] = np.clip(box2d[:, 1], 0, Object3d.BEV_SHAPE[0])
-        else:
-            box2d = np.zeros(4, dtype=np.int32)
-            # discrete_center = np.floor((self.pos / voxel_size)).astype(np.int32)
-            cu = np.floor((self.pos[0] - Object3d.MIN_XZ[0]) / voxel_size).astype(
-                np.int32
-            )
-            cv = (
-                Object3d.BEV_SHAPE[0]
-                - 1
-                - ((self.pos[2] - Object3d.MIN_XZ[1]) / voxel_size).astype(np.int32)
-            )
-            half_l, half_w = int(self.l / voxel_size / 2), int(self.w / voxel_size / 2)
-            box2d[0], box2d[1] = cu - half_l, cv - half_w
-            box2d[2], box2d[3] = cu + half_l, cv + half_w
-
-        return box2d
+        return
 
     def to_str(self):
         print_str = (

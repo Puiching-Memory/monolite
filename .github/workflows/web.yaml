@@ -1,9 +1,11 @@
-name: ci 
+name: web
+
 on:
   push:
-    branches:
-      - master 
-      - main
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+    
 permissions:
   contents: write
 jobs:
