@@ -48,13 +48,13 @@ Note that we are an engineering project, the code will be updated synchronously,
 
 ### 虚拟环境
 
-依据此[pytorch_issue](https://github.com/pytorch/pytorch/issues/138506)中的讨论，我们将虚拟环境迁移至[miniforge](https://github.com/conda-forge/miniforge)
+依据此[pytorch_issue](https://github.com/pytorch/pytorch/issues/138506)中的讨论，请不要再通过conda通道下载安装torch
 
 ```
 conda create -n monolite python=3.12
 conda activate monolite
 pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu126
-pip install -r requirements.txt
+pip install -r requirements.txt -v
 ```
 
 ### 前置组件
