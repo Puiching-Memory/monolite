@@ -88,7 +88,7 @@ class KITTI(data.Dataset):
     def get_calib(self, index_string) -> Calibration:
         calib_file = os.path.join(self.calib_dir, f"{index_string}.txt")
         assert os.path.exists(calib_file)
-        return Calibration(calib_file)
+        return get_calib_from_file(calib_file)
 
     def build_pkl(self, index) -> None:
         if os.path.exists(f"{self.data_dir}/cache/{index}.pkl"):
