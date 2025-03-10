@@ -141,7 +141,13 @@ python tools\export_pt.py --cfg C:\workspace\github\monolite\experiment\monolite
 # 运行测试
 
 ```
-pytest test/ --cov=lib --cov-report=html --benchmark-enable --html=report.html
+pytest test/ --cov=lib --cov-report=html --benchmark-enable --html=report.html --benchmark-autosave --benchmark-histogram
+```
+
+### 与历史测试比较
+
+```
+pytest-benchmark compare {old_id} {new_id} --histogram --csv
 ```
 
 # Confirm致谢

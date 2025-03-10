@@ -18,3 +18,7 @@ _*.py
 *.pptx
 htmlcov/
 assets/
+.benchmarks/
+*.svg
+*.csv
+.vscode/
