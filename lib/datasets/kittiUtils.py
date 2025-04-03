@@ -154,26 +154,6 @@ class Object3d:
 ###################  calibration  ###################
 
 
-def get_calib_from_file(calib_path: str) -> object:
-    with open(calib_path) as f:
-        lines = f.readlines()
-
-    # 使用列表推导式读取数据
-    matrices = [
-        np.array(lines[i].strip().split(" ")[1:], dtype=np.float32) for i in range(7)
-    ]
-    
-    P0 = matrices[0].reshape(3, 4)
-    P1 = matrices[1].reshape(3, 4)
-    P2 = matrices[2].reshape(3, 4)
-    P3 = matrices[3].reshape(3, 4)
-    R0 = matrices[4].reshape(3, 3)
-    Tr_velo_to_cam = matrices[5].reshape(3, 4)
-    Tr_imu_to_velo = matrices[6].reshape(3, 4)
-
-    return Calibration(P0, P1, P2, R0, Tr_velo_to_cam, Tr_imu_to_velo)
-
-
 @dataclass
 class Calibration:
     """kitti calibration class
@@ -278,17 +258,24 @@ class Calibration:
         )
         return pts_rect
 
-    def depthmap_to_rect(self, depth_map):
+    def depthmap_to_rect(self, depth_map:np.ndarray):
         """
         :param depth_map: (H, W), depth_map
         :return:
         """
-        x_range = np.arange(0, depth_map.shape[1])
-        y_range = np.arange(0, depth_map.shape[0])
-        x_idxs, y_idxs = np.meshgrid(x_range, y_range)
-        x_idxs, y_idxs = x_idxs.reshape(-1), y_idxs.reshape(-1)
-        depth = depth_map[y_idxs, x_idxs]
+        # 使用广播机制直接生成所有点的x和y坐标
+        y_idxs, x_idxs = np.indices(depth_map.shape)
+        
+        # 将二维坐标展开成一维
+        x_idxs = x_idxs.ravel()
+        y_idxs = y_idxs.ravel()
+        
+        # 获取对应的深度值
+        depth = depth_map.ravel()
+        
+        # 使用向量化的方式进行坐标转换
         pts_rect = self.img_to_rect(x_idxs, y_idxs, depth)
+        
         return pts_rect, x_idxs, y_idxs
 
     def corners3d_to_img_boxes(self, corners3d):
@@ -372,6 +359,25 @@ class Calibration:
         """
         return np.hstack((pts, np.ones((pts.shape[0], 1), dtype=np.float32)))
 
+def get_calib_from_file(calib_path: str) -> Calibration:
+    with open(calib_path) as f:
+        lines = f.readlines()
+
+    # 使用列表推导式读取数据
+    matrices = [
+        np.array(lines[i].strip().split(" ")[1:], dtype=np.float32) for i in range(7)
+    ]
+    
+    P0 = matrices[0].reshape(3, 4)
+    P1 = matrices[1].reshape(3, 4)
+    P2 = matrices[2].reshape(3, 4)
+    P3 = matrices[3].reshape(3, 4)
+    R0 = matrices[4].reshape(3, 3)
+    Tr_velo_to_cam = matrices[5].reshape(3, 4)
+    Tr_imu_to_velo = matrices[6].reshape(3, 4)
+
+    return Calibration(P0, P1, P2, R0, Tr_velo_to_cam, Tr_imu_to_velo)
+
 
 def inverse_rigid_trans(Tr: np.ndarray) -> np.ndarray:
     """逆刚体变换矩阵(3x4 形式为 [R|t])
@@ -405,16 +411,5 @@ def rotz(t):
 
 
 if __name__ == "__main__":
-    from pyinstrument import Profiler
-
-    profiler = Profiler()
-    profiler.start()
-
-    for i in range(1000):
-        result = cart_to_hom(np.random.rand(1000, 3))
-
-    profiler.stop()
-    profiler.print()
-
-    with open("profiler.html", "w") as f:
-        f.write(profiler.output_html())
+    calib = get_calib_from_file(r"C:\Users\11386\Downloads\kitti3d\training\calib\000000.txt")
+    print(calib.depthmap_to_rect(np.zeros((375, 1242))))

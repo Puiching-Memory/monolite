@@ -71,4 +71,4 @@ pyinstrument==5.0.1
 
 # check if torch.complie is supported on windows
 # https://github.com/woct0rdho/triton-windows
-triton-windows==3.2.0.post11 # Only For Windows!
+triton-windows==3.2.0.post12 # Only For Windows!

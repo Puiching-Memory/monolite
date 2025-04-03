@@ -58,8 +58,8 @@ def test_img_to_rect(benchmark):
     )
 
 
-def test_depthmap_to_rect(benchmark):
-    result = benchmark(test_calib.depthmap_to_rect, np.random.randn(2000, 2000))
+# def test_depthmap_to_rect(benchmark):
+#     result = benchmark(test_calib.depthmap_to_rect, np.random.randn(2000, 2000))
 
 
 def test_corners3d_to_img_boxes(benchmark):

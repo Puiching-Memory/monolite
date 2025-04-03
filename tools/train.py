@@ -34,6 +34,8 @@ import datetime
 from typing import Optional
 from tqdm import tqdm
 
+from swanlab.log import trace_handler
+
 try:
     local_rank = int(os.environ["LOCAL_RANK"])
 except:
@@ -44,7 +46,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"  # 设置同步cuda,仅debug时使用
 # os.environ["TORCH_LOGS"] = "+dynamo"
 # os.environ["TORCHDYNAMO_VERBOSE"] = "1"
-
 
 def train(
     model: torch.nn.Module,
@@ -66,6 +67,20 @@ def train(
     torch.manual_seed(trainner.get_seed())
     np.random.seed(trainner.get_seed())
     random.seed(trainner.get_seed())
+
+    # profiler
+    # with torch.profiler.profile(
+    #     activities=[
+    #         torch.profiler.ProfilerActivity.CPU,
+    #         torch.profiler.ProfilerActivity.CUDA,
+    #     ],
+    #     # on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/'),
+    #     on_trace_ready=trace_handler(),
+    #     with_flops=True,
+    #     record_shapes = True,
+    #     profile_memory = True,
+    #     with_stack = True,
+    # ) as p:
 
     # epoch循环
     microstep = 0
@@ -116,7 +131,7 @@ def train(
             swanlab.log(info_dataset)
             bar_dataset.set_postfix({"loss": round(loss.item(), 2)})
             bar_dataset.update()
-            # break
+            break
 
         scheduler.step()
 
@@ -134,16 +149,16 @@ def train(
         )
         logger.info(f"checkpoint: {epoch} saved to {trainner.get_save_path()}")
 
-        # 保存模型预测可视化结果
-        model.eval()
-        results = visualizer.decode_output(inputs, outputs, data_info)
-        results = {key: swanlab.Image(value) for key, value in results.items()}
-        swanlab.log(results)
+        # # 保存模型预测可视化结果
+        # model.eval()
+        # results = visualizer.decode_output(inputs, outputs, data_info)
+        # results = {key: swanlab.Image(value) for key, value in results.items()}
+        # swanlab.log(results)
 
-        # 保存真值可视化结果
-        results = visualizer.decode_target(inputs, targets, data_info)
-        results = {key: swanlab.Image(value) for key, value in results.items()}
-        swanlab.log(results)
+        # # 保存真值可视化结果
+        # results = visualizer.decode_target(inputs, targets, data_info)
+        # results = {key: swanlab.Image(value) for key, value in results.items()}
+        # swanlab.log(results)
 
         logger.info(
             f"epoch {epoch} finished, time: {time.perf_counter_ns()-epoch_start_time:.2f}s"
@@ -179,7 +194,7 @@ if __name__ == "__main__":
         help="path to config file",
     )
     args = parser.parse_args()
-    
+
     logger = get_logger()
 
     # 初始化swanlab,启动$swanlab watch ./logs

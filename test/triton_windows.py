@@ -4,6 +4,7 @@
 代码支持: https://github.com/woct0rdho/triton-windows
 
 NOTE: 必须有任意NVIDIA/Intel GPU可用,windows系统安装MSVC
+NOTE: https://github.com/woct0rdho/triton-windows/issues/79
 """
 
 import torch
