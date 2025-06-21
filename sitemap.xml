@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/"/>
+    </url>
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/dev/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/dev/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/dev/"/>
+    </url>
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/install/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/install/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/install/"/>
+    </url>
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/triton_windows/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/triton_windows/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/triton_windows/"/>
+    </url>
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/usage/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/usage/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/usage/"/>
+    </url>
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/en/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/"/>
+    </url>
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/en/dev/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/dev/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/dev/"/>
+    </url>
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/en/install/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/install/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/install/"/>
+    </url>
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/en/usage/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/usage/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/usage/"/>
+    </url>
+    <url>
+        <loc>https://puiching-memory.github.io/monolite/en/triton_windows/</loc>
+        <lastmod>2025-06-21</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://puiching-memory.github.io/monolite/en/triton_windows/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://puiching-memory.github.io/monolite/triton_windows/"/>
+    </url>
+</urlset>
