@@ -53,7 +53,7 @@ Note that we are an engineering project, the code will be updated synchronously,
 ```
 conda create -n monolite python=3.12
 conda activate monolite
-pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu126
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 pip install -r requirements.txt -v
 ```
 
