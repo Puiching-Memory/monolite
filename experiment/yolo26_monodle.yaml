@@ -1,0 +1,86 @@
+output_dir: ./runs/yolo26_monodle_experiment
+seed: 42
+amp: true
+resume: null
+
+model:
+  name: yolo26_monodle
+  args:
+    num_classes: 3
+    pretrained: /desay120T/ct/dev/uid01954/monolite/runs/detect/train/weights/best.pt
+    freeze_base: true
+
+loss:
+  name: monolite_loss
+  args:
+    heatmap3d_weight: 1.0
+    use_2d: false  # Base model is frozen, no 2D loss for now unless using the added 2D heads
+
+optimizer:
+  name: adamw
+  args:
+    lr: 0.001  # Higher LR since we only train heads
+    weight_decay: 0.01
+
+scheduler:
+  name: cosine
+  args:
+    T_max: 50
+    eta_min: 1.0e-6
+
+trainer:
+  start_epoch: 0
+  max_epoch: 50
+  save_frequency: 1
+  log_interval: 20
+  eval_interval: 1
+  eval_max_batches: null
+  eval_pred_thr: 0.25
+  eval_pred_topk: 300
+  eval_iou_thr: 0.5
+  eval_nms_thr: 0.5
+  miou_thr: 0.5
+  vis_interval: 1
+  vis_num: 2
+  vis_boxes: true
+  vis_pred_thr: 0.25
+  vis_pred_num: 20
+
+dataset:
+  name: kitti
+  args:
+    # Adjust path if needed
+    root_dir: /desay120T/ct/dev/uid01955/data/KITTIDataset
+    class_map:
+      Car: 0
+      Pedestrian: 1
+      Cyclist: 2
+    image_size: [384, 1280]
+    max_objects: 50
+    return_boxes2d: true
+  train_split: train
+  val_split: val
+  test_split: test
+  train_loader:
+    batch_size: 8
+    num_workers: 8
+    shuffle: true
+    pin_memory: true
+    drop_last: true
+    persistent_workers: true
+    prefetch_factor: 2
+  val_loader:
+    batch_size: 8
+    num_workers: 8
+    shuffle: false
+    pin_memory: true
+    drop_last: false
+  test_loader:
+    batch_size: 8
+    num_workers: 8
+    shuffle: false
+    pin_memory: true
+    drop_last: false
+
+test:
+  checkpoint: null
