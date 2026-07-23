@@ -4,7 +4,7 @@
 
 # main dependencies (must be installed)
 torchinfo==1.8.0
-pillow==12.2.0
+pillow==12.3.0
 matplotlib==3.10.3
 open3d==0.19.0 # https://www.open3d.org/docs/latest/getting_started.html
 pyyaml==6.0.2
