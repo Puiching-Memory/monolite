@@ -48,6 +48,8 @@ Note that we are an engineering project, the code will be updated synchronously,
 
 ### 虚拟环境
 
+需要 Python 3.11 或更高版本；Pillow 13 不再支持 Python 3.10。下方使用 Python 3.12。
+
 依据此[pytorch_issue](https://github.com/pytorch/pytorch/issues/138506)中的讨论，请不要再通过conda通道下载安装torch
 
 ```
